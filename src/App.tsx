@@ -1,11 +1,16 @@
-import { isEmbedMode } from './app/utils/is-embed-mode';
-import { Router } from './routes';
-import { Widget } from './views/pages/widget';
+import { isEmbedMode } from '@/app/utils/is-embed-mode';
+import { Router } from '@/routes';
+import { TooltipProvider } from '@/views/components/ui/tooltip';
+import { Widget } from '@/views/pages/widget';
 
 export function App() {
   if (isEmbedMode()) {
     return <Widget />;
   }
 
-  return <Router />;
+  return (
+    <TooltipProvider>
+      <Router />
+    </TooltipProvider>
+  );
 }
