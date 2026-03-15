@@ -19,7 +19,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/views/components/ui/tooltip';
-import { useIsMobile } from '@/views/hooks/use-mobile';
+import { useIsMobile } from '@/app/context/use-mobile';
 import { PanelLeftIcon } from 'lucide-react';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
