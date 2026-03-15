@@ -40,7 +40,7 @@ export function Widget() {
 
   return (
     <TooltipProvider delayDuration={400}>
-      <div className="flex flex-col h-full w-full bg-background min-h-0">
+      <div className="flex flex-col h-full w-full min-h-0 bg-background border border-primary/10 rounded-xl overflow-hidden">
         <ChatHeader
           selectedChat={selectedChat}
           setSelectedChat={setSelectedChat}

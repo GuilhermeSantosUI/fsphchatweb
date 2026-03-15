@@ -32,15 +32,15 @@ export function ChatHeader({
   onNewChat,
 }: Props) {
   return (
-    <div className="flex items-center px-3 py-2.5 shrink-0">
+    <div className="flex items-center px-3 py-2.5 shrink-0 border-b border-primary/15 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80">
       <Select value={selectedChat} onValueChange={setSelectedChat}>
-        <SelectTrigger className="w-auto border-none shadow-none bg-transparent hover:bg-muted/60 text-sm font-medium text-foreground px-2 py-1 h-auto gap-1.5 focus:ring-0">
-          <SelectValue placeholder="Novo chat com Ayla" />
+        <SelectTrigger className="w-auto border-none shadow-none bg-transparent hover:bg-primary/10 text-sm font-medium text-foreground px-2 py-1 h-auto gap-1.5 focus:ring-0">
+          <SelectValue placeholder="Novo TR com Ayla" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="new">Novo chat com Ayla</SelectItem>
-          <SelectItem value="chat-1">Conversa anterior 1</SelectItem>
-          <SelectItem value="chat-2">Conversa anterior 2</SelectItem>
+          <SelectItem value="new">Novo TR com Ayla</SelectItem>
+          <SelectItem value="chat-1">TR anterior 1</SelectItem>
+          <SelectItem value="chat-2">TR anterior 2</SelectItem>
         </SelectContent>
       </Select>
 
@@ -50,7 +50,7 @@ export function ChatHeader({
             <button
               type="button"
               onClick={onNewChat}
-              className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+              className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
             >
               <PencilLineIcon className="w-4 h-4" />
             </button>
@@ -65,7 +65,7 @@ export function ChatHeader({
             window.parent.postMessage({ type: 'ag-view-mode', mode: v }, '*');
           }}
         >
-          <SelectTrigger className="w-auto border-none shadow-none bg-transparent hover:bg-muted/60 text-xs text-muted-foreground hover:text-foreground px-1.5 py-1 h-auto gap-1 focus:ring-0 rounded-md">
+          <SelectTrigger className="w-auto border-none shadow-none bg-transparent hover:bg-primary/10 text-xs text-muted-foreground hover:text-primary px-1.5 py-1 h-auto gap-1 focus:ring-0 rounded-md">
             <SelectValue placeholder="Alterar visualização" />
           </SelectTrigger>
           <SelectContent align="end">
@@ -81,7 +81,7 @@ export function ChatHeader({
               onClick={() => {
                 window.parent.postMessage({ type: 'ag-minimize' }, '*');
               }}
-              className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+              className="p-1.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
             >
               {viewMode === 'sidebar' ? (
                 <CaretDoubleRightIcon className="w-4 h-4" />
