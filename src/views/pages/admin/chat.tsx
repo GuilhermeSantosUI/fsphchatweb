@@ -1,6 +1,5 @@
 import { INITIAL_MESSAGES } from '@/app/utils/messages';
 import { ChatContent } from '@/views/components/chat/chat-content';
-import { ChatHeader } from '@/views/components/chat/chat-header';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
 
@@ -17,8 +16,7 @@ export function AdminChat() {
     });
 
   return (
-    <div className="flex-1 flex flex-col h-full">
-      <ChatHeader setMessages={setMessages} />
+    <div className="flex-1 min-h-0 h-full flex flex-col overflow-hidden">
       <ChatContent
         messages={messages}
         sendMessage={sendMessage}
