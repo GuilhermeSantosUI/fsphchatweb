@@ -2,7 +2,7 @@ import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/views/components/ui/collapsible"
+} from '@/views/components/ui/collapsible';
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -12,22 +12,23 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-} from "@/views/components/ui/sidebar"
-import { ChevronRightIcon } from "lucide-react"
+} from '@/views/components/ui/sidebar';
+import { ChevronRightIcon } from 'lucide-react';
+import { NavLink } from 'react-router-dom';
 
 export function NavMain({
   items,
 }: {
   items: {
-    title: string
-    url: string
-    icon?: React.ReactNode
-    isActive?: boolean
+    title: string;
+    url: string;
+    icon?: React.ReactNode;
+    isActive?: boolean;
     items?: {
-      title: string
-      url: string
-    }[]
-  }[]
+      title: string;
+      url: string;
+    }[];
+  }[];
 }) {
   return (
     <SidebarGroup>
@@ -53,9 +54,9 @@ export function NavMain({
                   {item.items?.map((subItem) => (
                     <SidebarMenuSubItem key={subItem.title}>
                       <SidebarMenuSubButton asChild>
-                        <a href={subItem.url}>
+                        <NavLink to={subItem.url}>
                           <span>{subItem.title}</span>
-                        </a>
+                        </NavLink>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   ))}
@@ -66,5 +67,5 @@ export function NavMain({
         ))}
       </SidebarMenu>
     </SidebarGroup>
-  )
+  );
 }

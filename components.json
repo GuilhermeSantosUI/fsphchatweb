@@ -24,5 +24,7 @@
   },
   "menuColor": "default",
   "menuAccent": "subtle",
-  "registries": {}
+  "registries": {
+    "@simple-ai": "https://simple-ai.dev/r/{name}.json"
+  }
 }
