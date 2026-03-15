@@ -6,9 +6,9 @@ export function AdminLayout() {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <SidebarInset>
-        <main className="flex h-full flex-1 min-h-0 flex-col overflow-hidden bg-muted/20">
-          <section className="min-h-0 flex-1 overflow-auto">
+      <SidebarInset className="h-svh overflow-hidden">
+        <main className="flex h-full min-h-0 flex-1 flex-col bg-muted/20">
+          <section className="min-h-0 flex-1 overflow-y-auto">
             <Outlet />
           </section>
         </main>
