@@ -7,8 +7,10 @@ export function AdminLayout() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <main className="flex-1 overflow-auto">
-          <Outlet />
+        <main className="flex h-full flex-1 min-h-0 flex-col overflow-hidden bg-muted/20">
+          <section className="min-h-0 flex-1 overflow-auto">
+            <Outlet />
+          </section>
         </main>
       </SidebarInset>
     </SidebarProvider>

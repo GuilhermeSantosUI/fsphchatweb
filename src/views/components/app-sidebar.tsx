@@ -15,71 +15,88 @@ import {
 import {
   AudioLinesIcon,
   BookOpenIcon,
+  Building2Icon,
+  DatabaseIcon,
   GalleryVerticalEndIcon,
   MessageSquareIcon,
-  TerminalIcon,
 } from 'lucide-react';
 
-// This is sample data.
 const data = {
   user: {
-    name: 'shadcn',
-    email: 'm@example.com',
+    name: 'Equipe FSPH',
+    email: 'gestao.tr@fsph.gov.br',
     avatar: '/avatars/shadcn.jpg',
   },
   teams: [
     {
-      name: 'Acme Inc',
+      name: 'FSPH',
       logo: <GalleryVerticalEndIcon />,
-      plan: 'Enterprise',
+      plan: 'Ambiente Institucional',
     },
     {
-      name: 'Acme Corp.',
+      name: 'Compras e Contratos',
       logo: <AudioLinesIcon />,
-      plan: 'Startup',
-    },
-    {
-      name: 'Evil Corp.',
-      logo: <TerminalIcon />,
-      plan: 'Free',
+      plan: 'Setor Operacional',
     },
   ],
   navMain: [
     {
-      title: 'Atendimento',
+      title: 'Operação',
       url: '/admin/chat',
       icon: <MessageSquareIcon />,
       isActive: true,
       items: [
         {
-          title: 'Dashboard',
+          title: 'Visão Geral',
           url: '/admin',
         },
         {
-          title: 'Chat',
+          title: 'Assistente de TR',
           url: '/admin/chat',
         },
       ],
     },
     {
-      title: 'Termos de Refêrencia',
+      title: 'Conhecimento',
+      url: '#',
+      icon: <DatabaseIcon />,
+      items: [
+        {
+          title: 'Base Vetorial',
+          url: '#',
+        },
+        {
+          title: 'Ground Truth',
+          url: '#',
+        },
+        {
+          title: 'Histórico de TRs',
+          url: '#',
+        },
+      ],
+    },
+    {
+      title: 'Governança',
       url: '#',
       icon: <BookOpenIcon />,
       items: [
         {
-          title: 'Introduction',
+          title: 'Diretrizes de Contratação',
           url: '#',
         },
         {
-          title: 'Get Started',
+          title: 'Conformidade e Auditoria',
           url: '#',
         },
+      ],
+    },
+    {
+      title: 'Institucional',
+      url: '#',
+      icon: <Building2Icon />,
+      items: [
         {
-          title: 'Tutorials',
-          url: '#',
-        },
-        {
-          title: 'Changelog',
+          title: 'Sobre a Solução',
           url: '#',
         },
       ],

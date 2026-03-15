@@ -6,14 +6,13 @@ import { DefaultChatTransport } from 'ai';
 import type { AIUIMessage } from '@/types/ai-messages';
 
 export function AdminChat() {
-  const { messages, sendMessage, status, stop, setMessages } =
-    useChat<AIUIMessage>({
-      id: 'chat-01',
-      transport: new DefaultChatTransport({
-        api: '/api/ai/chat',
-      }),
-      messages: INITIAL_MESSAGES,
-    });
+  const { messages, sendMessage, status, stop } = useChat<AIUIMessage>({
+    id: 'chat-01',
+    transport: new DefaultChatTransport({
+      api: '/api/ai/chat',
+    }),
+    messages: INITIAL_MESSAGES,
+  });
 
   return (
     <div className="flex-1 min-h-0 h-full flex flex-col overflow-hidden">

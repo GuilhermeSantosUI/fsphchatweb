@@ -72,7 +72,6 @@ function ChatHeaderRoomName({
 }
 
 function ChatHeaderRoomMemberCount({
-  className,
   children,
   ...props
 }: ComponentProps<typeof Button> & { children: number }) {
