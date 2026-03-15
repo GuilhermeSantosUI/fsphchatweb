@@ -272,17 +272,17 @@ export function AdminChat() {
         <ChatMessageAreaScrollButton alignment="center" />
       </ChatMessageArea>
 
-      <div className="sticky bottom-0 z-20 px-4 pb-4 mt-10">
+      <div className="sticky bottom-0 z-20 px-4 pb-4">
         <ChatInput
           onSubmit={handleSubmit}
           isStreaming={isLoading}
           onStop={stop}
-          className="mx-auto w-full max-w-3xl border-primary/40 focus-within:ring-primary/50"
+          className="mx-auto w-full bg-transparent max-w-3xl border-primary/40 focus-within:ring-primary/50"
         >
           <ChatInputEditor
             value={value}
             onChange={onChange}
-            placeholder="Type a message..."
+            placeholder="Pergunte algo ou envie uma mensagem..."
             className="text-foreground"
           />
           <ChatInputGroupAddon align="block-end">
