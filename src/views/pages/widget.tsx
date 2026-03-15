@@ -12,10 +12,6 @@ export function Widget() {
   const [selectedModel, setSelectedModel] = useState('auto');
   const [suggestionText, setSuggestionText] = useState<string | null>(null);
 
-  const params = new URLSearchParams(window.location.search);
-  const agValue = params.get('agvalue');
-  const agc = params.get('agc');
-
   const {
     messages,
     isLoading,
@@ -24,6 +20,9 @@ export function Widget() {
     handleSubmit,
     stop,
     clearMessages,
+    attachments,
+    addAttachments,
+    removeAttachment,
   } = useChatMessages();
 
   const isHomeScreen = messages.length === 0;
@@ -40,7 +39,7 @@ export function Widget() {
 
   return (
     <TooltipProvider delayDuration={400}>
-      <div className="flex flex-col h-full w-full min-h-0 bg-background border border-primary/10 rounded-xl overflow-hidden">
+      <div className="flex flex-col h-full w-full min-h-0 bg-background overflow-hidden">
         <ChatHeader
           selectedChat={selectedChat}
           setSelectedChat={setSelectedChat}
@@ -49,11 +48,9 @@ export function Widget() {
           onNewChat={clearMessages}
         />
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden min-h-0">
           {isHomeScreen ? (
             <ChatHomeScreen
-              agValue={agValue}
-              agc={agc}
               onSuggestionClick={(text) => {
                 setSuggestionText(text);
                 onChange({
@@ -68,7 +65,11 @@ export function Widget() {
               }}
             />
           ) : (
-            <ChatMessages messages={messages} isLoading={isLoading} />
+            <ChatMessages
+              messages={messages}
+              isLoading={isLoading}
+              attachedFiles={attachments}
+            />
           )}
         </div>
 
@@ -82,6 +83,9 @@ export function Widget() {
           setSelectedModel={setSelectedModel}
           suggestionText={suggestionText}
           onSuggestionAnimationDone={() => setSuggestionText(null)}
+          attachments={attachments}
+          onAddAttachments={addAttachments}
+          onRemoveAttachment={removeAttachment}
         />
       </div>
     </TooltipProvider>

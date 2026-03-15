@@ -38,7 +38,7 @@ export function ChatHeader({
           <SelectValue placeholder="Novo TR com Ayla" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="new">Novo TR com Ayla</SelectItem>
+          <SelectItem value="new">Novo TR com Horta</SelectItem>
           <SelectItem value="chat-1">TR anterior 1</SelectItem>
           <SelectItem value="chat-2">TR anterior 2</SelectItem>
         </SelectContent>

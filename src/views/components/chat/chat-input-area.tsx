@@ -18,11 +18,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/views/components/ui/tooltip';
-import {
-  CircleWavyCheckIcon,
-  PlusIcon,
-  SlidersHorizontalIcon,
-} from '@phosphor-icons/react';
+import { PaperclipIcon, XIcon } from '@phosphor-icons/react';
 import type { JSONContent } from '@tiptap/react';
 import { useEffect, useRef } from 'react';
 
@@ -36,6 +32,9 @@ type Props = {
   setSelectedModel: (value: string) => void;
   suggestionText?: string | null;
   onSuggestionAnimationDone?: () => void;
+  attachments?: File[];
+  onAddAttachments?: (files: FileList | null) => void;
+  onRemoveAttachment?: (index: number) => void;
 };
 
 export function ChatInputArea({
@@ -48,12 +47,15 @@ export function ChatInputArea({
   setSelectedModel,
   suggestionText,
   onSuggestionAnimationDone,
+  attachments = [],
+  onAddAttachments,
+  onRemoveAttachment,
 }: Props) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (suggestionText) {
-      // Auto-clear after animation completes (stagger + item duration)
       const duration = Math.max(1000, suggestionText.length * 35 + 600);
       timerRef.current = setTimeout(() => {
         onSuggestionAnimationDone?.();
@@ -70,7 +72,46 @@ export function ChatInputArea({
   };
 
   return (
-    <div className="shrink-0 px-3 pb-3 pt-1">
+    <div className="sticky bottom-0 z-10 shrink-0 bg-background px-3 pb-3 pt-1">
+      {attachments.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2 px-1">
+          {attachments.map((file, i) => (
+            <div
+              key={i}
+              className="flex items-center gap-1.5 text-xs border border-primary/20 rounded-lg bg-primary/5 px-2 py-1 group"
+            >
+              <PaperclipIcon className="w-3 h-3 text-primary shrink-0" />
+              <span className="max-w-30 truncate text-foreground/80">
+                {file.name}
+              </span>
+              <span className="text-muted-foreground/50 text-[10px]">
+                {(file.size / 1024).toFixed(0)}KB
+              </span>
+              <button
+                type="button"
+                onClick={() => onRemoveAttachment?.(i)}
+                className="ml-0.5 p-0.5 rounded text-muted-foreground hover:text-destructive transition-colors"
+              >
+                <XIcon className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        multiple
+        accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.csv,.png,.jpg,.jpeg"
+        className="sr-only"
+        onChange={(e) => {
+          onAddAttachments?.(e.target.files);
+          // Limpar o input para permitir re-seleção do mesmo arquivo
+          e.target.value = '';
+        }}
+      />
+
       <ChatInput
         value={value}
         onChange={onChange}
@@ -79,24 +120,15 @@ export function ChatInputArea({
         onStop={onStop}
         className="rounded-xl border border-border bg-muted/40 shadow-none"
       >
-        <ChatInputGroupAddon align="block-start" className="pb-0">
-          <span className="flex items-center gap-1.5 bg-emerald-500/20 text-emerald-400 text-xs font-medium px-2 py-0.5 rounded-full border border-emerald-500/30">
-            <span className="w-3 h-3 flex items-center justify-center">
-              <CircleWavyCheckIcon />
-            </span>
-            Gestão Pública
-          </span>
-        </ChatInputGroupAddon>
-
         <div
           className="relative w-full"
           onKeyDown={clearAnimation}
           onPointerDown={clearAnimation}
         >
           <ChatInputEditor
-            placeholder="Pergunte à Ayla sobre gestão pública..."
+            placeholder="Pergunte ao Horta o que quiser sobre a criação de TRs na FSPH..."
             className={cn(
-              'text-foreground/80 text-sm min-h-[2rem]',
+              'text-foreground/80 text-sm min-h-16',
               suggestionText && 'opacity-0',
             )}
           />
@@ -120,24 +152,16 @@ export function ChatInputArea({
             <TooltipTrigger asChild>
               <button
                 type="button"
-                className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                onClick={() => fileInputRef.current?.click()}
+                className={cn(
+                  'p-1 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors',
+                  attachments.length > 0 && 'text-primary',
+                )}
               >
-                <PlusIcon className="w-4 h-4" />
+                <PaperclipIcon className="w-4 h-4" />
               </button>
             </TooltipTrigger>
-            <TooltipContent side="top">Adicionar contexto</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                type="button"
-                className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              >
-                <SlidersHorizontalIcon className="w-4 h-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="top">Configurações</TooltipContent>
+            <TooltipContent side="top">Anexar arquivo</TooltipContent>
           </Tooltip>
 
           <Select value={selectedModel} onValueChange={setSelectedModel}>
@@ -145,12 +169,12 @@ export function ChatInputArea({
               <SelectValue placeholder="Automático" />
             </SelectTrigger>
             <SelectContent align="end">
-              <SelectItem value="auto">Ayla</SelectItem>
-              <SelectItem value="ayla-pro">Ayla Pro</SelectItem>
+              <SelectItem value="auto">Horta</SelectItem>
+              <SelectItem value="horta-pro">Horta Pro</SelectItem>
             </SelectContent>
           </Select>
 
-          <ChatInputSubmitButton className="rounded-full bg-foreground text-background hover:bg-foreground/90 h-7 w-7" />
+          <ChatInputSubmitButton className="rounded-full bg-primary text-background hover:bg-foreground/90 h-7 w-7" />
         </ChatInputGroupAddon>
       </ChatInput>
     </div>

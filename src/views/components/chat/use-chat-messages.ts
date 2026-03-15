@@ -1,80 +1,45 @@
+import type { AIUIMessage } from '@/types/ai-messages';
 import { useChatInput } from '@/views/components/ui/chat-input';
-import { useRef, useState } from 'react';
-import type { Message } from './types';
-
-function mockChatApi(question: string, signal?: AbortSignal): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      resolve(`Resposta mockada para: "${question}"`);
-    }, 1500);
-
-    signal?.addEventListener('abort', () => {
-      clearTimeout(timeout);
-      reject(new Error('Request aborted'));
-    });
-  });
-}
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
+import { useState } from 'react';
 
 export function useChatMessages() {
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
 
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const { messages, sendMessage, status, stop, setMessages } =
+    useChat<AIUIMessage>({
+      id: 'widget-chat',
+      transport: new DefaultChatTransport({
+        api: '/api/ai/chat',
+      }),
+    });
 
-  const sendMessage = async (question: string) => {
-    abortControllerRef.current = new AbortController();
-
-    try {
-      setIsLoading(true);
-
-      const response = await mockChatApi(
-        question,
-        abortControllerRef.current.signal,
-      );
-
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          role: 'assistant',
-          parts: [{ type: 'text', text: response }],
-          createdAt: new Date(),
-        },
-      ]);
-    } catch (error) {
-      if ((error as Error).message !== 'Request aborted') {
-        console.error(error);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const stop = () => {
-    abortControllerRef.current?.abort();
-    setIsLoading(false);
-  };
+  const isLoading = status === 'streaming' || status === 'submitted';
 
   const { value, onChange, handleSubmit } = useChatInput({
     onSubmit: (parsed) => {
-      if (!parsed.content.trim()) return;
-
-      const userMsg: Message = {
-        id: Date.now().toString(),
+      if (!parsed.content.trim() && attachments.length === 0) return;
+      sendMessage({
         role: 'user',
         parts: [{ type: 'text', text: parsed.content }],
-        createdAt: new Date(),
-      };
-
-      setMessages((prev) => [...prev, userMsg]);
-
-      sendMessage(parsed.content);
+      });
+      setAttachments([]);
     },
   });
 
   const clearMessages = () => {
     stop();
     setMessages([]);
+  };
+
+  const addAttachments = (files: FileList | null) => {
+    if (!files) return;
+    setAttachments((prev) => [...prev, ...Array.from(files)]);
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
   return {
@@ -85,5 +50,8 @@ export function useChatMessages() {
     handleSubmit,
     stop,
     clearMessages,
+    attachments,
+    addAttachments,
+    removeAttachment,
   };
 }
