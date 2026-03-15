@@ -1,179 +1,193 @@
-import type { AIUIMessage } from "@/types/ai-messages";
+import type { AIUIMessage } from '@/types/ai-messages';
 
 export const INITIAL_MESSAGES: AIUIMessage[] = [
-	{
-		id: "1",
-		parts: [
-			{
-				type: "text",
-				text: "Hi! I need help organizing my project management workflow. Can you guide me through some best practices?",
-			},
-		],
-		role: "user",
-	},
-	{
-		id: "2",
-		parts: [
-			{
-				type: "tool-get-project-management-resources",
-				toolCallId: "resources-1",
-				state: "output-available",
-				input: {
-					topic: "project management best practices",
-				},
-				output: "Resources found: Project Initiation (defining objectives, identifying stakeholders), Planning Phase (task breakdown, timelines, responsibilities), Execution (monitoring progress), and Closure (documentation, lessons learned).",
-			},
-			{
-				type: "text",
-				text: "I'd be happy to help you with project management best practices! Here's a structured approach:\n\n#### 1. Project Initiation\n- Define clear project objectives\n- Identify key stakeholders\n- Set measurable goals\n- Create project charter\n\n#### 2. Planning Phase\n- Break down work into tasks\n- Set priorities\n- Create timeline\n- Assign responsibilities\n\nWould you like me to elaborate on any of these points?",
-			},
-		],
-		role: "assistant",
-	},
-	{
-		id: "3",
-		parts: [
-			{
-				type: "text",
-				text: "Yes, please tell me more about breaking down work into tasks. How should I approach this?",
-			},
-		],
-		role: "user",
-	},
-	{
-		id: "4",
-		parts: [
-			{
-				type: "tool-get-task-breakdown-guidance",
-				toolCallId: "breakdown-1",
-				state: "output-available",
-				input: {
-					projectType: "software development",
-					complexity: "moderate",
-				},
-				output: {
-					approach: "Work Breakdown Structure (WBS) methodology",
-					guidelines: [
-						"Tasks should be Specific, Measurable, Achievable, and Time-bound (SMART)",
-						"Follow the 8/80 rule: tasks shouldn't be less than 8 hours or more than 80 hours",
-						"Identify dependencies between tasks",
-						"Assign clear ownership for each task",
-					],
-					exampleTasks: [
-						"User Authentication Feature - 3 days - Priority: High",
-						"Database Schema Design - 2 days - Dependencies: Requirements gathering",
-						"API Endpoint Development - 5 days - Dependencies: Database setup",
-					],
-				},
-			},
-			{
-				type: "text",
-				text: "Breaking down work into tasks is crucial for project success. Here's a detailed approach:\n\n##### Work Breakdown Structure (WBS)\n1. **Start with major deliverables**\n   - Identify end goals\n   - List main project phases\n\n2. **Break into smaller components**\n   - Tasks should be:\n     - Specific\n     - Measurable\n     - Achievable\n     - Time-bound\n\n3. **Task Estimation**\n   ```\n   Task Example:\n   - Name: User Authentication Feature\n   - Duration: 3 days\n   - Dependencies: Database setup\n   - Priority: High\n   ```\n\n4. **Use the 8/80 Rule**\n   - Tasks shouldn't take less than 8 hours\n   - Or more than 80 hours\n   - If they do, break them down further",
-			},
-		],
-		role: "assistant",
-	},
-	{
-		id: "5",
-		parts: [
-			{
-				type: "text",
-				text: "That's really helpful! What tools would you recommend for tracking all these tasks?",
-			},
-		],
-		role: "user",
-	},
-	{
-		id: "6",
-		parts: [
-			{
-				type: "tool-recommend-project-tools",
-				toolCallId: "tools-1",
-				state: "output-available",
-				input: {
-					teamSize: 5,
-					budget: "medium",
-				},
-				output: {
-					primaryRecommendation: {
-						name: "Jira Software",
-						advantages: [
-							"Built for development teams",
-							"Great for agile workflows",
-							"Git integration",
-							"Mobile apps available",
-						],
-						setup: "Sprint Length: 2 weeks, Board Structure: Backlog → To Do → In Progress → Code Review → Testing → Done",
-					},
-					alternatives: [
-						{
-							name: "ClickUp",
-							benefits: [
-								"Cost-effective",
-								"More flexible",
-								"Faster setup",
-							],
-						},
-					],
-				},
-			},
-			{
-				type: "text",
-				text: "Here are some popular project management tools:\n\n##### Tips for Tool Selection\n- ✅ Consider team size\n- ✅ Integration needs\n- ✅ Learning curve\n- ✅ Budget constraints\n\nWould you like specific recommendations based on your team's needs?",
-			},
-		],
-		role: "assistant",
-	},
-	{
-		id: "7",
-		parts: [
-			{
-				type: "text",
-				text: "Yes, we're a small team of 5 developers. What would work best for us?",
-			},
-		],
-		role: "user",
-	},
-	{
-		id: "8",
-		parts: [
-			{
-				type: "tool-recommend-project-tools",
-				toolCallId: "tools-2",
-				state: "output-available",
-				input: {
-					teamSize: 5,
-					budget: "medium",
-					needs: ["git integration", "agile workflows"],
-				},
-				output: {
-					primaryRecommendation: {
-						name: "Jira Software",
-						advantages: [
-							"Built for development teams",
-							"Great for agile workflows",
-							"Git integration",
-							"Mobile apps available",
-						],
-						setup: "Sprint Length: 2 weeks, Board Structure: Backlog → To Do → In Progress → Code Review → Testing → Done",
-					},
-					alternatives: [
-						{
-							name: "ClickUp",
-							benefits: [
-								"Cost-effective",
-								"More flexible",
-								"Faster setup",
-							],
-						},
-					],
-				},
-			},
-			{
-				type: "text",
-				text: "For a team of 5 developers, I'd recommend:\n\n##### Primary Choice: Jira Software\n\n**Advantages:**\n- 🔧 Built for development teams\n- 📊 Great for agile workflows\n- 🔄 Git integration\n- 📱 Mobile apps\n\n##### Alternative: ClickUp\n\n**Benefits:**\n- 💰 Cost-effective\n- 🎨 More flexible\n- 🚀 Faster setup\n\n```\nRecommended Setup:\n- Sprint Length: 2 weeks\n- Board Structure:\n  - Backlog\n  - To Do\n  - In Progress\n  - Code Review\n  - Testing\n  - Done\n- Key Features:\n  - Story Points\n  - Time Tracking\n  - Sprint Reports\n```\n\nWould you like me to explain how to set up the recommended workflow in either of these tools?",
-			},
-		],
-		role: "assistant",
-	},
+  {
+    id: '1',
+    parts: [
+      {
+        type: 'text',
+        text: 'Olá! Preciso montar um Termo de Referência para contratação de serviço na FSPH. Você pode me guiar passo a passo?',
+      },
+    ],
+    role: 'user',
+  },
+  {
+    id: '2',
+    parts: [
+      {
+        type: 'tool-get-project-management-resources',
+        toolCallId: 'tr-structure-1',
+        state: 'output-available',
+        input: {
+          topic:
+            'estrutura de termo de referência para contratação de serviço na FSPH',
+        },
+        output:
+          'Estrutura sugerida de TR: 1) Objeto da contratação, 2) Justificativa e necessidade, 3) Especificações técnicas, 4) Quantitativos, 5) Critérios de aceitação, 6) Obrigações da contratada e da contratante, 7) Prazo de execução, 8) Critérios de medição e pagamento, 9) Gestão e fiscalização contratual, 10) Requisitos de habilitação.',
+      },
+      {
+        type: 'text',
+        text: 'Perfeito! Vamos montar seu Termo de Referência com foco em conformidade e objetividade.\n\n#### Estrutura inicial do TR\n1. **Objeto da contratação**\n2. **Justificativa da necessidade**\n3. **Especificações técnicas**\n4. **Quantitativos e unidades**\n5. **Critérios de aceitação**\n6. **Prazos e cronograma**\n7. **Medição e pagamento**\n8. **Fiscalização do contrato**\n\nQuer começar pelo item 1 (Objeto) e item 2 (Justificativa)?',
+      },
+    ],
+    role: 'assistant',
+  },
+  {
+    id: '3',
+    parts: [
+      {
+        type: 'text',
+        text: 'Sim. O objeto é contratar solução com IA para apoiar a elaboração de Termos de Referência com base em documentos anteriores. Como descrevo isso corretamente?',
+      },
+    ],
+    role: 'user',
+  },
+  {
+    id: '4',
+    parts: [
+      {
+        type: 'tool-get-task-breakdown-guidance',
+        toolCallId: 'tr-object-1',
+        state: 'output-available',
+        input: {
+          projectType: 'elaboração de termo de referência com apoio de IA',
+          complexity: 'moderate',
+        },
+        output: {
+          approach:
+            'Estruturação orientada por seções obrigatórias do Termo de Referência',
+          guidelines: [
+            'Descrever o resultado esperado e não apenas a tecnologia',
+            'Evitar direcionamento de marca ou fornecedor específico',
+            'Indicar requisitos mínimos funcionais e de segurança da informação',
+            'Vincular o objeto à necessidade administrativa da FSPH',
+          ],
+          exampleTasks: [
+            'Definir objeto e justificativa - 1 dia - Prioridade: Alta',
+            'Consolidar especificações técnicas e critérios de aceitação - 2 dias - Dependência: alinhamento com área demandante',
+            'Estruturar medição, pagamento e fiscalização contratual - 1 dia - Dependência: validação administrativa',
+          ],
+        },
+      },
+      {
+        type: 'text',
+        text: 'Ótimo ponto. Para o item **Objeto**, você pode usar este texto-base:\n\n##### Minuta de Objeto\nContratação de solução tecnológica baseada em IA, com arquitetura RAG e base vetorial, para apoiar a elaboração de Termos de Referência da FSPH, por meio de recuperação de informações de documentos históricos institucionais (ground truth), promovendo padronização, rastreabilidade e redução de alucinações na geração de conteúdo.\n\n##### Boas práticas de redação\n- Descrever o que será entregue e o benefício esperado\n- Evitar termos que restrinjam a competitividade\n- Incluir requisitos mínimos de desempenho, segurança e auditoria\n- Manter linguagem objetiva e verificável',
+      },
+    ],
+    role: 'assistant',
+  },
+  {
+    id: '5',
+    parts: [
+      {
+        type: 'text',
+        text: 'Perfeito. E como posso estruturar os critérios de aceitação e de pagamento para esse TR?',
+      },
+    ],
+    role: 'user',
+  },
+  {
+    id: '6',
+    parts: [
+      {
+        type: 'tool-recommend-project-tools',
+        toolCallId: 'tr-criteria-1',
+        state: 'output-available',
+        input: {
+          teamSize: 5,
+          budget: 'medium',
+          needs: [
+            'elaboração de TR',
+            'padronização documental',
+            'fluxo de revisão técnica',
+          ],
+        },
+        output: {
+          primaryRecommendation: {
+            name: 'Fluxo estruturado de validação do TR',
+            advantages: [
+              'Critérios de aceitação objetivos e auditáveis',
+              'Medição mensal com indicadores claros',
+              'Rastreabilidade das fontes (ground truth)',
+              'Maior segurança jurídica e técnica',
+            ],
+            setup:
+              'Aceitação: acurácia mínima + rastreabilidade documental + disponibilidade mínima. Pagamento: mensal, condicionado ao cumprimento dos SLAs, com glosa proporcional por não conformidade.',
+          },
+          alternatives: [
+            {
+              name: 'Modelo simplificado por checklist técnico',
+              benefits: [
+                'Implementação mais rápida',
+                'Fácil auditoria',
+                'Boa adaptação para equipes pequenas',
+              ],
+            },
+          ],
+        },
+      },
+      {
+        type: 'text',
+        text: 'Excelente pergunta. Para deixar o TR auditável e executável, recomendo:\n\n##### Critérios de aceitação\n- Indicadores objetivos de qualidade técnica\n- Evidência de aderência às fontes históricas (ground truth)\n- Verificação de segurança, logs e rastreabilidade\n- Testes de desempenho e disponibilidade\n\n##### Critérios de medição e pagamento\n- Medição mensal por indicadores de nível de serviço (SLA)\n- Pagamento vinculado ao cumprimento de metas mínimas\n- Previsão de glosa proporcional quando houver descumprimento\n\nQuer que eu monte agora uma minuta completa do TR com esses tópicos preenchidos?',
+      },
+    ],
+    role: 'assistant',
+  },
+  {
+    id: '7',
+    parts: [
+      {
+        type: 'text',
+        text: 'Sim, por favor. Pode gerar uma versão inicial completa do TR com linguagem formal e pronta para revisão jurídica?',
+      },
+    ],
+    role: 'user',
+  },
+  {
+    id: '8',
+    parts: [
+      {
+        type: 'tool-recommend-project-tools',
+        toolCallId: 'tr-draft-1',
+        state: 'output-available',
+        input: {
+          teamSize: 5,
+          budget: 'medium',
+          needs: [
+            'minuta completa de TR',
+            'linguagem formal administrativa',
+            'pronto para revisão jurídica',
+          ],
+        },
+        output: {
+          primaryRecommendation: {
+            name: 'Minuta inicial completa de TR',
+            advantages: [
+              'Estrutura formal com seções essenciais',
+              'Critérios técnicos objetivos',
+              'Base para revisão técnica e jurídica',
+              'Alinhamento com necessidade da FSPH',
+            ],
+            setup:
+              'Seções preenchidas: objeto, justificativa, especificações, aceitação, medição/pagamento e fiscalização; linguagem formal-administrativa.',
+          },
+          alternatives: [
+            {
+              name: 'Versão resumida (enxuta)',
+              benefits: [
+                'Mais rápida para circular internamente',
+                'Foco no essencial',
+                'Facilita consolidação inicial',
+              ],
+            },
+          ],
+        },
+      },
+      {
+        type: 'text',
+        text: 'Perfeito — já consigo te entregar uma **minuta inicial completa de Termo de Referência** para a FSPH, com linguagem formal, critérios objetivos e estrutura pronta para revisão técnica e jurídica.\n\nPosso seguir agora com: \n1. versão resumida (enxuta), ou\n2. versão detalhada (mais robusta para instrução processual).\n\nQual formato você prefere?',
+      },
+    ],
+    role: 'assistant',
+  },
 ];

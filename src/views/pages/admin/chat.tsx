@@ -146,7 +146,7 @@ export function AdminChat() {
             />
           ) : (
             messages.map((message) => {
-              const userName = message.role === 'user' ? 'You' : 'Assistant';
+              const userName = message.role === 'user' ? 'Você' : 'Horta';
               return (
                 <ChatMessage key={message.id}>
                   <ChatMessageActions>
