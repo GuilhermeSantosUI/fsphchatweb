@@ -1,3 +1,4 @@
+import { AdminPageShell } from '@/views/components/admin/admin-page-shell';
 import { Badge } from '@/views/components/ui/badge';
 import { Button } from '@/views/components/ui/button';
 import {
@@ -8,9 +9,12 @@ import {
   CardTitle,
 } from '@/views/components/ui/card';
 import {
+  DatabaseZapIcon,
   FileIcon,
   FileSpreadsheetIcon,
   FileTextIcon,
+  FolderSyncIcon,
+  Layers3Icon,
   Trash2Icon,
   UploadCloudIcon,
 } from 'lucide-react';
@@ -51,79 +55,155 @@ export function Attachments() {
 
   const addFiles = (incoming: FileList | null) => {
     if (!incoming) return;
-    const newFiles: UploadedFile[] = Array.from(incoming).map((f) => ({
+    const newFiles: UploadedFile[] = Array.from(incoming).map((file) => ({
       id: crypto.randomUUID(),
-      name: f.name,
-      size: f.size,
+      name: file.name,
+      size: file.size,
       uploadedAt: new Date(),
     }));
+
     setFiles((prev) => [...prev, ...newFiles]);
   };
 
-  const removeFile = (id: string) =>
-    setFiles((prev) => prev.filter((f) => f.id !== id));
+  const removeFile = (id: string) => {
+    setFiles((prev) => prev.filter((file) => file.id !== id));
+  };
 
   return (
-    <div className="space-y-4 p-4 lg:p-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Anexos de TR</CardTitle>
-          <CardDescription>
-            Envie documentos para alimentar a base de conhecimento da IA.
-            Formatos aceitos: PDF, DOCX, TXT, XLSX, ODT e outros.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              setDragging(true);
-            }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={(e) => {
-              e.preventDefault();
-              setDragging(false);
-              addFiles(e.dataTransfer.files);
-            }}
-            onClick={() => inputRef.current?.click()}
-            className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed p-10 transition-colors ${
-              dragging
-                ? 'border-primary bg-primary/5'
-                : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/30'
-            }`}
-          >
-            <UploadCloudIcon
-              className={`size-10 ${dragging ? 'text-primary' : 'text-muted-foreground'}`}
+    <AdminPageShell
+      breadcrumbs={[
+        { label: 'Administrador', href: '/admin/visao-geral' },
+        { label: 'Base documental' },
+      ]}
+      title="Base documental e anexos"
+      description="Gerencie os arquivos que alimentam a base vetorial da IA para geracao de TR com contexto institucional confiavel e rastreavel."
+      badge="RAG habilitado"
+      actions={
+        <>
+          <Button variant="outline">
+            <FolderSyncIcon className="size-4" />
+            Sincronizar base
+          </Button>
+          <Button onClick={() => inputRef.current?.click()}>
+            <UploadCloudIcon className="size-4" />
+            Enviar documentos
+          </Button>
+        </>
+      }
+      stats={[
+        {
+          label: 'Documentos indexados',
+          value: '248',
+          description: 'Arquivos com embeddings disponiveis para recuperacao.',
+          tone: 'primary',
+        },
+        {
+          label: 'Fila de ingestao',
+          value: `${files.length}`,
+          description: 'Arquivos aguardando processamento e validacao.',
+          tone: files.length ? 'warning' : 'default',
+        },
+        {
+          label: 'Ultima atualizacao',
+          value: 'Hoje',
+          description: 'Sincronizacao da base vetorial concluida as 09:42.',
+          tone: 'success',
+        },
+        {
+          label: 'Cobertura do contexto',
+          value: '94%',
+          description:
+            'Historico de TRs e anexos criticos disponiveis para busca.',
+          tone: 'default',
+        },
+      ]}
+    >
+      <div className="grid gap-6 xl:grid-cols-[1.7fr_1fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle>Enviar anexos para a IA</CardTitle>
+            <CardDescription>
+              Inclua editais, TRs antigos, pareceres e anexos tecnicos para
+              enriquecer a geracao baseada em Ground Truth.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div
+              onDragOver={(event) => {
+                event.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(event) => {
+                event.preventDefault();
+                setDragging(false);
+                addFiles(event.dataTransfer.files);
+              }}
+              onClick={() => inputRef.current?.click()}
+              className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-10 transition-colors ${
+                dragging
+                  ? 'border-primary bg-primary/5'
+                  : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/30'
+              }`}
+            >
+              <UploadCloudIcon
+                className={`size-10 ${dragging ? 'text-primary' : 'text-muted-foreground'}`}
+              />
+              <div className="text-center">
+                <p className="text-sm font-medium">
+                  Arraste arquivos aqui ou clique para selecionar
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  PDF, DOCX, TXT, XLSX, ODT e arquivos complementares de ate 20
+                  MB
+                </p>
+              </div>
+              <div className="flex flex-wrap justify-center gap-1">
+                {ACCEPTED_LABELS.map((ext) => (
+                  <Badge key={ext} variant="secondary" className="text-xs">
+                    {ext}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+
+            <input
+              ref={inputRef}
+              type="file"
+              multiple
+              accept={ACCEPTED_TYPES}
+              className="hidden"
+              onChange={(event) => addFiles(event.target.files)}
             />
-            <div className="text-center">
-              <p className="text-sm font-medium">
-                Arraste arquivos aqui ou clique para selecionar
-              </p>
-              <p className="mt-1 text-xs text-muted-foreground">
-                PDF, DOCX, TXT, XLSX, ODT — até 20 MB por arquivo
-              </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Pipeline RAG</CardTitle>
+            <CardDescription>
+              Etapas executadas apos o envio de cada anexo institucional.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-muted-foreground">
+            <div className="flex items-start gap-3 rounded-xl border p-3">
+              <Layers3Icon className="mt-0.5 size-4 text-primary" />
+              Classificacao automatica por tipo de documento e tema do TR.
             </div>
-            <div className="flex flex-wrap justify-center gap-1">
-              {ACCEPTED_LABELS.map((ext) => (
-                <Badge key={ext} variant="secondary" className="text-xs">
-                  {ext}
-                </Badge>
-              ))}
+            <div className="flex items-start gap-3 rounded-xl border p-3">
+              <DatabaseZapIcon className="mt-0.5 size-4 text-primary" />
+              Geracao de embeddings e indexacao na base vetorial.
             </div>
-          </div>
-          <input
-            ref={inputRef}
-            type="file"
-            multiple
-            accept={ACCEPTED_TYPES}
-            className="hidden"
-            onChange={(e) => addFiles(e.target.files)}
-          />
-        </CardContent>
-      </Card>
+            <div className="flex items-start gap-3 rounded-xl border p-3">
+              <FolderSyncIcon className="mt-0.5 size-4 text-primary" />
+              Disponibilizacao do conteudo para chat e fluxo de analise do TR.
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {files.length > 0 ? (
-        <Card>
+        <Card className="mt-6">
           <CardHeader>
             <CardTitle>Documentos enviados</CardTitle>
             <CardDescription>
@@ -135,7 +215,7 @@ export function Attachments() {
             {files.map((file) => (
               <div
                 key={file.id}
-                className="flex items-center gap-3 rounded-md border px-3 py-2"
+                className="flex items-center gap-3 rounded-xl border px-3 py-3"
               >
                 <span className="text-muted-foreground">
                   {getFileIcon(file.name)}
@@ -165,11 +245,13 @@ export function Attachments() {
           </CardContent>
         </Card>
       ) : (
-        <div className="flex flex-col items-center justify-center gap-2 py-12 text-center text-muted-foreground">
-          <FileIcon className="size-10 opacity-30" />
-          <p className="text-sm">Nenhum documento enviado ainda.</p>
-        </div>
+        <Card className="mt-6">
+          <CardContent className="flex flex-col items-center justify-center gap-2 py-12 text-center text-muted-foreground">
+            <FileIcon className="size-10 opacity-30" />
+            <p className="text-sm">Nenhum documento enviado ainda.</p>
+          </CardContent>
+        </Card>
       )}
-    </div>
+    </AdminPageShell>
   );
 }
