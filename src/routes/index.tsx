@@ -1,6 +1,6 @@
+import { Dashboard } from '@/views/pages/admin/dashboard';
+import { AdminLayout } from '@/views/pages/admin/layout';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { Dashboard } from '../views/pages/admin/dashboard';
-import { AdminLayout } from '../views/pages/admin/layout';
 
 export function Router() {
   return (

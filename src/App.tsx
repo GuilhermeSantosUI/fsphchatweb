@@ -1,4 +1,4 @@
-import { isEmbedMode } from '@/app/utils/is-embed-mode';
+import { isEmbedMode } from '@/app/utils';
 import { Router } from '@/routes';
 import { Widget } from '@/views/pages/widget';
 
