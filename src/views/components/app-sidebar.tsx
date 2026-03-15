@@ -13,12 +13,9 @@ import {
   SidebarRail,
 } from '@/views/components/ui/sidebar';
 import {
-  AudioLinesIcon,
-  BookOpenIcon,
-  Building2Icon,
-  DatabaseIcon,
   GalleryVerticalEndIcon,
   MessageSquareIcon,
+  PaperclipIcon,
 } from 'lucide-react';
 
 const data = {
@@ -33,73 +30,17 @@ const data = {
       logo: <GalleryVerticalEndIcon />,
       plan: 'Ambiente Institucional',
     },
-    {
-      name: 'Compras e Contratos',
-      logo: <AudioLinesIcon />,
-      plan: 'Setor Operacional',
-    },
   ],
   navMain: [
     {
-      title: 'Operação',
+      title: 'Anexos de TR',
+      url: '/admin',
+      icon: <PaperclipIcon />,
+    },
+    {
+      title: 'Chat Interno',
       url: '/admin/chat',
       icon: <MessageSquareIcon />,
-      isActive: true,
-      items: [
-        {
-          title: 'Visão Geral',
-          url: '/admin',
-        },
-        {
-          title: 'Assistente de TR',
-          url: '/admin/chat',
-        },
-      ],
-    },
-    {
-      title: 'Conhecimento',
-      url: '#',
-      icon: <DatabaseIcon />,
-      items: [
-        {
-          title: 'Base Vetorial',
-          url: '#',
-        },
-        {
-          title: 'Ground Truth',
-          url: '#',
-        },
-        {
-          title: 'Histórico de TRs',
-          url: '#',
-        },
-      ],
-    },
-    {
-      title: 'Governança',
-      url: '#',
-      icon: <BookOpenIcon />,
-      items: [
-        {
-          title: 'Diretrizes de Contratação',
-          url: '#',
-        },
-        {
-          title: 'Conformidade e Auditoria',
-          url: '#',
-        },
-      ],
-    },
-    {
-      title: 'Institucional',
-      url: '#',
-      icon: <Building2Icon />,
-      items: [
-        {
-          title: 'Sobre a Solução',
-          url: '#',
-        },
-      ],
     },
   ],
 };

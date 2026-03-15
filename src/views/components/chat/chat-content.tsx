@@ -130,14 +130,17 @@ export function ChatContent({
   });
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col overflow-hidden" {...props}>
+    <div
+      className="relative flex-1 min-h-0 flex flex-col overflow-hidden"
+      {...props}
+    >
       <ChatMessageArea className="min-h-0">
         <ChatAutoScroll
           messages={messages}
           status={status}
           inputValue={value}
         />
-        <ChatMessageAreaContent className="pt-6">
+        <ChatMessageAreaContent className="pt-6 pb-32">
           {messages.length === 0 ? (
             <NoChatMessages
               onSuggestionClick={(suggestion) => {
@@ -273,17 +276,19 @@ export function ChatContent({
         </ChatMessageAreaContent>
         <ChatMessageAreaScrollButton alignment="center" />
       </ChatMessageArea>
-      <div className="sticky bottom-0 z-20 border-t bg-background px-2 py-4">
+
+      <div className="absolute inset-x-0 bottom-0 z-20 px-4 pb-4">
         <ChatInput
           onSubmit={handleSubmit}
           isStreaming={isLoading}
           onStop={stop}
-          className="max-w-2xl mx-auto w-full"
+          className="mx-auto w-full max-w-3xl border-primary/40 bg-primary/10 focus-within:ring-primary/50"
         >
           <ChatInputEditor
             value={value}
             onChange={onChange}
             placeholder="Type a message..."
+            className="text-foreground"
           />
           <ChatInputGroupAddon align="block-end">
             <ChatInputSubmitButton className="ml-auto" />
