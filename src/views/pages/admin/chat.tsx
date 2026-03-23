@@ -1,39 +1,10 @@
 import { generateTrRoute } from '@/app/services/generate-tr';
 import { cn } from '@/app/utils';
-import { AnimatedShinyText } from '@/views/components/ui/animated-shiny-text';
-import {
-  ChatInput,
-  ChatInputEditor,
-  ChatInputGroupAddon,
-  ChatInputSubmitButton,
-  useChatInput,
-} from '@/views/components/ui/chat-input';
-import {
-  ChatMessage,
-  ChatMessageAction,
-  ChatMessageActions,
-  ChatMessageAuthor,
-  ChatMessageAvatar,
-  ChatMessageAvatarAssistantIcon,
-  ChatMessageAvatarUserIcon,
-  ChatMessageContainer,
-  ChatMessageContent,
-  ChatMessageHeader,
-  ChatMessageMarkdown,
-  ChatMessageTimestamp,
-} from '@/views/components/ui/chat-message';
-import {
-  ChatMessageArea,
-  ChatMessageAreaContent,
-  ChatMessageAreaScrollButton,
-} from '@/views/components/ui/chat-message-area';
-import {
-  ChatSuggestion,
-  ChatSuggestions,
-  ChatSuggestionsContent,
-  ChatSuggestionsHeader,
-  ChatSuggestionsTitle,
-} from '@/views/components/ui/chat-suggestions';
+import AnimatedShinyText from '@/views/components/ui/animated-shiny-text';
+import { ChatInput, ChatInputEditor, ChatInputGroupAddon, ChatInputSubmitButton, useChatInput } from '@/views/components/ui/chat-input';
+import { ChatMessage, ChatMessageAction, ChatMessageActions, ChatMessageAuthor, ChatMessageAvatar, ChatMessageAvatarAssistantIcon, ChatMessageAvatarUserIcon, ChatMessageContainer, ChatMessageContent, ChatMessageHeader, ChatMessageMarkdown, ChatMessageTimestamp } from '@/views/components/ui/chat-message';
+import { ChatMessageArea, ChatMessageAreaContent, ChatMessageAreaScrollButton } from '@/views/components/ui/chat-message-area';
+import { ChatSuggestion, ChatSuggestions, ChatSuggestionsContent, ChatSuggestionsHeader, ChatSuggestionsTitle } from '@/views/components/ui/chat-suggestions';
 import { TextAnimate } from '@/views/components/ui/text-animate';
 import { Copy, ThumbsUp } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -335,7 +306,7 @@ export function AdminChat() {
                 </ChatMessageHeader>
 
                 <ChatMessageContent>
-                  <AnimatedShinyText className="text-sm">
+                  <AnimatedShinyText>
                     {assistantLoadingMessage}
                   </AnimatedShinyText>
                 </ChatMessageContent>

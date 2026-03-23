@@ -1,30 +1,40 @@
-import { cn } from '@/app/utils';
-import { motion } from 'motion/react';
-import type { ComponentProps } from 'react';
+import { cn } from '@/app/utils/index.ts';
 
-type AnimatedShinyTextProps = ComponentProps<typeof motion.span>;
+import type { CSSProperties, FC, ReactNode } from 'react';
 
-export function AnimatedShinyText({
-  className,
+interface AnimatedShinyTextProps {
+  children: ReactNode;
+  className?: string;
+  shimmerWidth?: number;
+}
+
+const AnimatedShinyText: FC<AnimatedShinyTextProps> = ({
   children,
-  ...props
-}: AnimatedShinyTextProps) {
+  className,
+  shimmerWidth = 100,
+}) => {
   return (
-    <motion.span
+    <p
+      style={
+        {
+          '--shiny-width': `${shimmerWidth}px`,
+        } as CSSProperties
+      }
       className={cn(
-        'inline-block bg-size-[220%_100%] bg-clip-text text-transparent',
+        'max-w-md text-neutral-600/70 dark:text-neutral-400/70',
+
+        // Shine effect
+        'animate-shiny-text bg-clip-text bg-no-repeat bg-position-[0_0] bg-size-[var(--shiny-width)_100%] [transition:background-position_1s_cubic-bezier(.6,.6,0,1)_infinite]',
+
+        // Shine gradient
+        'bg-linear-to-r from-transparent via-black/80 via-50% to-transparent  dark:via-white/80',
+
         className,
       )}
-      style={{
-        backgroundImage:
-          'linear-gradient(110deg, hsl(var(--muted-foreground)) 35%, hsl(var(--primary)) 50%, hsl(var(--muted-foreground)) 65%)',
-      }}
-      initial={{ backgroundPosition: '0% 50%' }}
-      animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
-      transition={{ duration: 2.2, repeat: Infinity, ease: 'linear' }}
-      {...props}
     >
       {children}
-    </motion.span>
+    </p>
   );
-}
+};
+
+export default AnimatedShinyText;
