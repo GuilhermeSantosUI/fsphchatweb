@@ -1,4 +1,4 @@
-import { trApiService } from '@/app/services';
+import { generateTrRoute } from '@/app/services/generate-tr';
 import { cn } from '@/app/utils';
 import { AnimatedShinyText } from '@/views/components/ui/animated-shiny-text';
 import {
@@ -192,7 +192,7 @@ export function AdminChat() {
       setIsLoading(true);
 
       try {
-        const response = await trApiService.generateTr({
+        const response = await generateTrRoute.generateTr({
           question,
           top_k: DEFAULT_TOP_K,
         });

@@ -1,17 +1,17 @@
 'use client';
 
+import type { AIUIMessage } from '@/app/models/ai-messages';
 import { cn } from '@/app/utils/index';
-import type { AIUIMessage } from '@/types/ai-messages';
 import {
-  AppHeader,
-  AppHeaderIcon,
-  AppHeaderSeparator,
+    AppHeader,
+    AppHeaderIcon,
+    AppHeaderSeparator,
 } from '@/views/components/layout/app-header';
 import { Button } from '@/views/components/ui/button';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
 } from '@/views/components/ui/tooltip';
 import type { useChat } from '@ai-sdk/react';
 import { MessagesSquare, RotateCcw, Users } from 'lucide-react';

@@ -1,4 +1,4 @@
-import type { AIUIMessage } from '@/types/ai-messages';
+import type { AIUIMessage } from '@/app/models/ai-messages';
 
 export const INITIAL_MESSAGES: AIUIMessage[] = [
   {

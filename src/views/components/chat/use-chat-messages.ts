@@ -1,4 +1,4 @@
-import type { AIUIMessage } from '@/types/ai-messages';
+import type { AIUIMessage } from '@/app/models/ai-messages';
 import { useChatInput } from '@/views/components/ui/chat-input';
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport } from 'ai';
