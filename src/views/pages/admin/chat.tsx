@@ -1,4 +1,6 @@
 import { trApiService } from '@/app/services';
+import { cn } from '@/app/utils';
+import { AnimatedShinyText } from '@/views/components/ui/animated-shiny-text';
 import {
   ChatInput,
   ChatInputEditor,
@@ -32,6 +34,7 @@ import {
   ChatSuggestionsHeader,
   ChatSuggestionsTitle,
 } from '@/views/components/ui/chat-suggestions';
+import { TextAnimate } from '@/views/components/ui/text-animate';
 import { Copy, ThumbsUp } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useStickToBottomContext } from 'use-stick-to-bottom';
@@ -44,6 +47,13 @@ const DEFAULT_CHAT_SUGGESTIONS = [
 ];
 
 const DEFAULT_TOP_K = 6;
+
+const ASSISTANT_LOADING_MESSAGES = [
+  'Analisando o contexto documental da FSPH...',
+  'Estruturando o Termo de Referência com base nas fontes recuperadas...',
+  'Consolidando objeto, justificativa e critérios de aceitação...',
+  'Refinando a minuta para revisão técnica e jurídica...',
+];
 
 type AdminChatMessage = {
   id: string;
@@ -113,6 +123,38 @@ export function AdminChat() {
     WELCOME_MESSAGE,
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [suggestionText, setSuggestionText] = useState<string | null>(null);
+  const [assistantLoadingMessage, setAssistantLoadingMessage] = useState(
+    ASSISTANT_LOADING_MESSAGES[0],
+  );
+
+  const getRandomLoadingMessage = (current?: string) => {
+    const options = ASSISTANT_LOADING_MESSAGES.filter(
+      (message) => message !== current,
+    );
+
+    if (options.length === 0) {
+      return ASSISTANT_LOADING_MESSAGES[0];
+    }
+
+    return options[Math.floor(Math.random() * options.length)];
+  };
+
+  useEffect(() => {
+    if (!isLoading) {
+      return;
+    }
+
+    setAssistantLoadingMessage((current) => getRandomLoadingMessage(current));
+
+    const intervalId = window.setInterval(() => {
+      setAssistantLoadingMessage((current) => getRandomLoadingMessage(current));
+    }, 1800);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [isLoading]);
 
   const stop = () => {
     setIsLoading(false);
@@ -143,6 +185,8 @@ export function AdminChat() {
       if (!question || isLoading) {
         return;
       }
+
+      setSuggestionText(null);
 
       setMessages((previous) => [...previous, createMessage('user', question)]);
       setIsLoading(true);
@@ -175,6 +219,38 @@ export function AdminChat() {
       }
     },
   });
+
+  const textToEditorValue = (text: string) => {
+    if (!text) {
+      return { type: 'doc', content: [] };
+    }
+
+    return {
+      type: 'doc',
+      content: [
+        {
+          type: 'paragraph',
+          content: [{ type: 'text', text }],
+        },
+      ],
+    };
+  };
+
+  const clearSuggestionAnimation = () => {
+    setSuggestionText(null);
+  };
+
+  const animateSuggestionInInput = (suggestion: string) => {
+    clearSuggestionAnimation();
+    onChange(textToEditorValue(suggestion));
+    setSuggestionText(suggestion);
+  };
+
+  const handleEditorChange = (event: Parameters<typeof onChange>[0]) => {
+    clearSuggestionAnimation();
+
+    onChange(event);
+  };
 
   return (
     <div className="flex-1 min-h-0 h-full flex flex-col overflow-hidden">
@@ -238,14 +314,39 @@ export function AdminChat() {
             );
           })}
 
+          {isLoading ? (
+            <ChatMessage key="assistant-loading">
+              <ChatMessageActions>
+                <ChatMessageAction label="Copy">
+                  <Copy className="size-4" />
+                </ChatMessageAction>
+                <ChatMessageAction label="Like">
+                  <ThumbsUp className="size-4" />
+                </ChatMessageAction>
+              </ChatMessageActions>
+              <ChatMessageAvatar className="flex items-center justify-center bg-primary">
+                <ChatMessageAvatarAssistantIcon />
+              </ChatMessageAvatar>
+
+              <ChatMessageContainer>
+                <ChatMessageHeader>
+                  <ChatMessageAuthor>Horta</ChatMessageAuthor>
+                  <ChatMessageTimestamp createdAt={new Date()} />
+                </ChatMessageHeader>
+
+                <ChatMessageContent>
+                  <AnimatedShinyText className="text-sm">
+                    {assistantLoadingMessage}
+                  </AnimatedShinyText>
+                </ChatMessageContent>
+              </ChatMessageContainer>
+            </ChatMessage>
+          ) : null}
+
           {hasOnlyWelcomeMessage ? (
             <NoChatMessages
               onSuggestionClick={(suggestion) => {
-                onChange({
-                  target: {
-                    value: suggestion,
-                  },
-                } as unknown as Parameters<typeof onChange>[0]);
+                animateSuggestionInInput(suggestion);
               }}
             />
           ) : null}
@@ -260,12 +361,31 @@ export function AdminChat() {
           onStop={stop}
           className="mx-auto w-full bg-transparent max-w-3xl border-primary/40 focus-within:ring-primary/50"
         >
-          <ChatInputEditor
-            value={value}
-            onChange={onChange}
-            placeholder="Pergunte algo ou envie uma mensagem..."
-            className="text-foreground"
-          />
+          <div
+            className="relative w-full"
+            onKeyDown={clearSuggestionAnimation}
+            onPointerDown={clearSuggestionAnimation}
+          >
+            <ChatInputEditor
+              value={value}
+              onChange={handleEditorChange}
+              placeholder="Pergunte algo ou envie uma mensagem..."
+              className={cn('text-foreground', suggestionText && 'opacity-0')}
+            />
+            {suggestionText ? (
+              <div className="absolute inset-0 px-4 pt-4 pb-2 pointer-events-none overflow-hidden text-foreground">
+                <TextAnimate
+                  animation="blurInUp"
+                  by="character"
+                  once
+                  startOnView={false}
+                  className="leading-normal m-0"
+                >
+                  {suggestionText}
+                </TextAnimate>
+              </div>
+            ) : null}
+          </div>
           <ChatInputGroupAddon align="block-end">
             <ChatInputSubmitButton className="ml-auto" />
           </ChatInputGroupAddon>
