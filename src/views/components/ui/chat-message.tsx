@@ -1,306 +1,299 @@
-"use client";
+'use client';
 
+import { cn } from '@/app/utils/index';
+import logoImg from '@/assets/fsph-logo.png';
 import {
-	Check,
-	ChevronRight,
-	Copy,
-	SparklesIcon,
-	UserIcon,
-} from "lucide-react";
-import { type ComponentProps, type ReactNode, useState } from "react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/views/components/ui/avatar";
-import { Button } from "@/views/components/ui/button";
-import { Card } from "@/views/components/ui/card";
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from '@/views/components/ui/avatar';
+import { Button } from '@/views/components/ui/button';
+import { Card } from '@/views/components/ui/card';
+import { MarkdownContent } from '@/views/components/ui/markdown-content';
 import {
-	Tooltip,
-	TooltipContent,
-	TooltipProvider,
-	TooltipTrigger,
-} from "@/views/components/ui/tooltip";
-import { cn } from "@/app/utils/index";
-import { MarkdownContent } from "@/views/components/ui/markdown-content";
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/views/components/ui/tooltip';
+import { Check, ChevronRight, Copy, UserIcon } from 'lucide-react';
+import { type ComponentProps, type ReactNode, useState } from 'react';
 
-function ChatMessage({ className, ...props }: ComponentProps<"div">) {
-	return (
-		<TooltipProvider>
-			<div
-				className={cn(
-					"group/chat-message relative flex w-full gap-2.5 py-2 px-3 rounded-md hover:bg-muted/50",
-					className,
-				)}
-				{...props}
-			/>
-		</TooltipProvider>
-	);
+function ChatMessage({ className, ...props }: ComponentProps<'div'>) {
+  return (
+    <TooltipProvider>
+      <div
+        className={cn(
+          'group/chat-message relative flex w-full gap-2.5 py-2 px-3 rounded-md hover:bg-muted/50',
+          className,
+        )}
+        {...props}
+      />
+    </TooltipProvider>
+  );
 }
 
-function ChatMessageContainer({ className, ...props }: ComponentProps<"div">) {
-	return (
-		<div
-			className={cn("flex w-full flex-col items-start gap-1", className)}
-			{...props}
-		/>
-	);
+function ChatMessageContainer({ className, ...props }: ComponentProps<'div'>) {
+  return (
+    <div
+      className={cn('flex w-full flex-col items-start gap-1', className)}
+      {...props}
+    />
+  );
 }
 
-function ChatMessageHeader({ className, ...props }: ComponentProps<"div">) {
-	return (
-		<div
-			className={cn("flex items-center gap-2 px-2 text-sm", className)}
-			{...props}
-		/>
-	);
+function ChatMessageHeader({ className, ...props }: ComponentProps<'div'>) {
+  return (
+    <div
+      className={cn('flex items-center gap-2 px-2 text-sm', className)}
+      {...props}
+    />
+  );
 }
 
-function ChatMessageAuthor({ className, ...props }: ComponentProps<"span">) {
-	return (
-		<span
-			className={cn("font-medium text-foreground", className)}
-			{...props}
-		/>
-	);
+function ChatMessageAuthor({ className, ...props }: ComponentProps<'span'>) {
+  return (
+    <span className={cn('font-medium text-foreground', className)} {...props} />
+  );
 }
 
-interface ChatMessageTimestampProps extends ComponentProps<"span"> {
-	createdAt: number | Date | string;
-	format?: Intl.DateTimeFormatOptions;
+interface ChatMessageTimestampProps extends ComponentProps<'span'> {
+  createdAt: number | Date | string;
+  format?: Intl.DateTimeFormatOptions;
 }
 
 function ChatMessageTimestamp({
-	className,
-	createdAt,
-	format = { hour: "numeric", minute: "numeric" },
-	...props
+  className,
+  createdAt,
+  format = { hour: 'numeric', minute: 'numeric' },
+  ...props
 }: ChatMessageTimestampProps) {
-	const date = createdAt instanceof Date ? createdAt : new Date(createdAt);
+  const date = createdAt instanceof Date ? createdAt : new Date(createdAt);
 
-	return (
-		<Tooltip>
-			<TooltipTrigger asChild>
-				<span
-					className={cn(
-						"text-xs text-muted-foreground cursor-default",
-						className,
-					)}
-					{...props}
-				>
-					{date.toLocaleTimeString("en-US", format)}
-				</span>
-			</TooltipTrigger>
-			<TooltipContent>
-				<p>{date.toLocaleString()}</p>
-			</TooltipContent>
-		</Tooltip>
-	);
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className={cn(
+            'text-xs text-muted-foreground cursor-default',
+            className,
+          )}
+          {...props}
+        >
+          {date.toLocaleTimeString('en-US', format)}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{date.toLocaleString()}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
-function ChatMessageContent({ className, ...props }: ComponentProps<"div">) {
-	return (
-		<div
-			className={cn("w-full flex flex-col gap-2 p-2", className)}
-			{...props}
-		/>
-	);
+function ChatMessageContent({ className, ...props }: ComponentProps<'div'>) {
+  return (
+    <div
+      className={cn('w-full flex flex-col gap-2 p-2', className)}
+      {...props}
+    />
+  );
 }
 
 interface ChatMessageMarkdownProps {
-	content: string;
-	className?: string;
+  content: string;
+  className?: string;
 }
 
 function ChatMessageMarkdown({ content, className }: ChatMessageMarkdownProps) {
-	return <MarkdownContent content={content || ""} className={className} />;
+  return <MarkdownContent content={content || ''} className={className} />;
 }
 
-function ChatMessageFooter({ className, ...props }: ComponentProps<"div">) {
-	return (
-		<div
-			className={cn(
-				"mt-1 flex items-center gap-2 px-2 text-xs text-muted-foreground",
-				className,
-			)}
-			{...props}
-		/>
-	);
+function ChatMessageFooter({ className, ...props }: ComponentProps<'div'>) {
+  return (
+    <div
+      className={cn(
+        'mt-1 flex items-center gap-2 px-2 text-xs text-muted-foreground',
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
 function ChatMessageActions({
-	className,
-	children,
-	...props
+  className,
+  children,
+  ...props
 }: ComponentProps<typeof Card>) {
-	return (
-		<Card
-			className={cn(
-				"absolute -top-5 right-5 z-20 flex flex-row gap-1 p-1 opacity-0 transition-opacity group-hover/chat-message:opacity-100",
-				className,
-			)}
-			{...props}
-		>
-			<TooltipProvider>{children}</TooltipProvider>
-		</Card>
-	);
+  return (
+    <Card
+      className={cn(
+        'absolute -top-5 right-5 z-20 flex flex-row gap-1 p-1 opacity-0 transition-opacity group-hover/chat-message:opacity-100',
+        className,
+      )}
+      {...props}
+    >
+      <TooltipProvider>{children}</TooltipProvider>
+    </Card>
+  );
 }
 
 interface ChatMessageActionProps extends ComponentProps<typeof Button> {
-	className?: string;
-	children?: ReactNode;
-	label: string;
+  className?: string;
+  children?: ReactNode;
+  label: string;
 }
 
 function ChatMessageAction({
-	className,
-	children,
-	label,
-	...props
+  className,
+  children,
+  label,
+  ...props
 }: ChatMessageActionProps) {
-	return (
-		<Tooltip>
-			<TooltipTrigger asChild>
-				<Button
-					variant="ghost"
-					size="icon"
-					className={cn("h-7 w-7", className)}
-					{...props}
-				>
-					{children}
-					<span className="sr-only">{label}</span>
-				</Button>
-			</TooltipTrigger>
-			<TooltipContent>
-				<p>{label}</p>
-			</TooltipContent>
-		</Tooltip>
-	);
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn('h-7 w-7', className)}
+          {...props}
+        >
+          {children}
+          <span className="sr-only">{label}</span>
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        <p>{label}</p>
+      </TooltipContent>
+    </Tooltip>
+  );
 }
 
 function ChatMessageActionCopy({
-	className,
-	onClick,
-	...props
+  onClick,
+  ...props
 }: ComponentProps<typeof Button>) {
-	const [hasCopied, setHasCopied] = useState(false);
-	return (
-		<ChatMessageAction
-			label="Copy"
-			onClick={(e) => {
-				onClick?.(e);
-				setHasCopied(true);
-				setTimeout(() => setHasCopied(false), 2000);
-			}}
-			{...props}
-		>
-			{hasCopied ? (
-				<Check className="size-4" />
-			) : (
-				<Copy className="size-4" />
-			)}
-		</ChatMessageAction>
-	);
+  const [hasCopied, setHasCopied] = useState(false);
+  return (
+    <ChatMessageAction
+      label="Copy"
+      onClick={(e) => {
+        onClick?.(e);
+        setHasCopied(true);
+        setTimeout(() => setHasCopied(false), 2000);
+      }}
+      {...props}
+    >
+      {hasCopied ? <Check className="size-4" /> : <Copy className="size-4" />}
+    </ChatMessageAction>
+  );
 }
 
 function ChatMessageAvatar(props: ComponentProps<typeof Avatar>) {
-	return (
-		<Avatar
-			className="[&_svg]:size-4 [&:has(svg)]:border [&:has(svg)]:border-border [&:has(svg)]:items-center [&:has(svg)]:justify-center"
-			{...props}
-		/>
-	);
+  return (
+    <Avatar
+      className="[&_svg]:size-4 [&:has(svg)]:border [&:has(svg)]:border-border [&:has(svg)]:items-center [&:has(svg)]:justify-center"
+      {...props}
+    />
+  );
 }
 
 function ChatMessageAvatarFallback(
-	props: ComponentProps<typeof AvatarFallback>,
+  props: ComponentProps<typeof AvatarFallback>,
 ) {
-	return <AvatarFallback {...props} />;
+  return <AvatarFallback {...props} />;
 }
 
 function ChatMessageAvatarImage(props: ComponentProps<typeof AvatarImage>) {
-	return <AvatarImage {...props} />;
+  return <AvatarImage {...props} />;
 }
 
 function ChatMessageAvatarUserIcon(props: ComponentProps<typeof UserIcon>) {
-	return <UserIcon {...props} />;
+  return <UserIcon {...props} className='size-4'/>;
 }
 
-function ChatMessageAvatarAssistantIcon(
-	props: ComponentProps<typeof SparklesIcon>,
-) {
-	return <SparklesIcon {...props} />;
+function ChatMessageAvatarAssistantIcon() {
+  return (
+    <>
+      <img src={logoImg} alt="FSPH Logo" className="size-5 -ml-1" />
+    </>
+  );
 }
 
 function ChatMessageThread({
-	className,
-	...props
+  className,
+  ...props
 }: ComponentProps<typeof Button>) {
-	return (
-		<Button
-			variant="ghost"
-			className={cn(
-				"group/button flex h-auto w-full border border-none items-center justify-start gap-2 px-2 py-1.5 transition-all",
-				"hover:border-input hover:bg-background hover:shadow-sm",
-				className,
-			)}
-			{...props}
-		/>
-	);
+  return (
+    <Button
+      variant="ghost"
+      className={cn(
+        'group/button flex h-auto w-full border border-none items-center justify-start gap-2 px-2 py-1.5 transition-all',
+        'hover:border-input hover:bg-background hover:shadow-sm',
+        className,
+      )}
+      {...props}
+    />
+  );
 }
 
-function ChatMessageThreadReplyCount(props: ComponentProps<"span">) {
-	return <span className="text-sm font-medium" {...props} />;
+function ChatMessageThreadReplyCount(props: ComponentProps<'span'>) {
+  return <span className="text-sm font-medium" {...props} />;
 }
 
-interface ChatMessageThreadTimestampProps extends ComponentProps<"span"> {
-	date: Date | number | string;
+interface ChatMessageThreadTimestampProps extends ComponentProps<'span'> {
+  date: Date | number | string;
 }
 function ChatMessageThreadTimestamp({
-	date: dateProp,
-	...props
+  date: dateProp,
+  ...props
 }: ChatMessageThreadTimestampProps) {
-	const date = new Date(dateProp).toLocaleTimeString([], {
-		hour: "2-digit",
-		minute: "2-digit",
-	});
-	return (
-		<span
-			className="block text-sm text-muted-foreground group-hover/button:hidden"
-			{...props}
-		>
-			Last reply at {date}
-		</span>
-	);
+  const date = new Date(dateProp).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+  return (
+    <span
+      className="block text-sm text-muted-foreground group-hover/button:hidden"
+      {...props}
+    >
+      Last reply at {date}
+    </span>
+  );
 }
 
-function ChatMessageThreadAction(props: ComponentProps<"span">) {
-	return (
-		<span
-			className="hidden w-full items-center gap-1 text-sm text-muted-foreground group-hover/button:flex"
-			{...props}
-		>
-			View thread
-			<ChevronRight className="ml-auto h-4 w-4" />
-		</span>
-	);
+function ChatMessageThreadAction(props: ComponentProps<'span'>) {
+  return (
+    <span
+      className="hidden w-full items-center gap-1 text-sm text-muted-foreground group-hover/button:flex"
+      {...props}
+    >
+      View thread
+      <ChevronRight className="ml-auto h-4 w-4" />
+    </span>
+  );
 }
 
 export {
-	ChatMessage,
-	ChatMessageAvatar,
-	ChatMessageAvatarImage,
-	ChatMessageAvatarFallback,
-	ChatMessageAvatarUserIcon,
-	ChatMessageAvatarAssistantIcon,
-	ChatMessageContainer,
-	ChatMessageHeader,
-	ChatMessageAuthor,
-	ChatMessageTimestamp,
-	ChatMessageContent,
-	ChatMessageMarkdown,
-	ChatMessageFooter,
-	ChatMessageActions,
-	ChatMessageAction,
-	ChatMessageActionCopy,
-	ChatMessageThread,
-	ChatMessageThreadReplyCount,
-	ChatMessageThreadTimestamp,
-	ChatMessageThreadAction,
+  ChatMessage,
+  ChatMessageAction,
+  ChatMessageActionCopy,
+  ChatMessageActions,
+  ChatMessageAuthor,
+  ChatMessageAvatar,
+  ChatMessageAvatarAssistantIcon,
+  ChatMessageAvatarFallback,
+  ChatMessageAvatarImage,
+  ChatMessageAvatarUserIcon,
+  ChatMessageContainer,
+  ChatMessageContent,
+  ChatMessageFooter,
+  ChatMessageHeader,
+  ChatMessageMarkdown,
+  ChatMessageThread,
+  ChatMessageThreadAction,
+  ChatMessageThreadReplyCount,
+  ChatMessageThreadTimestamp,
+  ChatMessageTimestamp,
 };
