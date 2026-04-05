@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 
+import { useAuth } from '@/app/context/auth';
 import { NavMain } from '@/views/components/nav-main';
 import { NavUser } from '@/views/components/nav-user';
 import { TeamSwitcher } from '@/views/components/team-switcher';
@@ -25,12 +26,13 @@ import {
   MessageSquareIcon,
   SendToBackIcon,
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const data = {
-  user: {
+  fallbackUser: {
     name: 'Equipe FSPH',
     email: 'gestao.tr@fsph.gov.br',
-    avatar: '/avatars/shadcn.jpg',
+    avatar: '',
   },
   teams: [
     {
@@ -93,10 +95,21 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { session, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const user = session
+    ? {
+        name: session.userName,
+        email: session.role === 'admin' ? 'Perfil admin' : 'Perfil autenticado',
+        avatar: '',
+      }
+    : data.fallbackUser;
+
   return (
     <Sidebar variant="inset" collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher  />
+        <TeamSwitcher />
       </SidebarHeader>
       <SidebarContent>
         <NavMain sections={data.navSections} />
@@ -119,7 +132,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser
+          user={user}
+          onLogout={() => {
+            logout();
+            navigate('/login', { replace: true });
+          }}
+        />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

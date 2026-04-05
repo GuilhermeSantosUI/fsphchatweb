@@ -1,3 +1,4 @@
+import { AuthProvider } from '@/app/context/auth';
 import { isEmbedMode } from '@/app/utils';
 import { Router } from '@/routes';
 import { Widget } from '@/views/pages/widget';
@@ -7,5 +8,9 @@ export function App() {
     return <Widget />;
   }
 
-  return <Router />;
+  return (
+    <AuthProvider>
+      <Router />
+    </AuthProvider>
+  );
 }
