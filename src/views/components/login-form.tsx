@@ -1,10 +1,27 @@
 import { useAuth } from '@/app/context/auth';
 import { cn } from '@/app/utils';
 import { Button } from '@/views/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/views/components/ui/card';
-import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator } from '@/views/components/ui/field';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/views/components/ui/card';
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldSeparator,
+} from '@/views/components/ui/field';
 import { Input } from '@/views/components/ui/input';
-import { ArrowRightIcon, BadgeCheckIcon, ShieldCheckIcon, SparklesIcon } from 'lucide-react';
+import {
+  ArrowRightIcon,
+  BadgeCheckIcon,
+  ShieldCheckIcon,
+  SparklesIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -38,25 +55,121 @@ export function LoginForm({ className }: LoginFormProps) {
   }
 
   return (
-    <div className={cn('grid gap-6 lg:grid-cols-[1.08fr_0.92fr]', className)}>
-      <div className="relative overflow-hidden rounded-[2rem] border border-border/60 bg-[linear-gradient(135deg,rgba(211,47,47,0.12),rgba(255,255,255,0.96)_40%,rgba(211,47,47,0.05))] p-8 shadow-[0_24px_80px_rgba(17,24,39,0.08)]">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(211,47,47,0.16),transparent_38%),radial-gradient(circle_at_bottom_left,rgba(17,24,39,0.08),transparent_35%)]" />
-        <div className="relative flex h-full flex-col justify-between gap-10">
-          <div className="space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-primary">
-              <SparklesIcon className="size-3.5" />
-              Plataforma FSPH
-            </div>
+    <div
+      className={cn(
+        'grid overflow-hidden rounded-[30px] border border-white/10 bg-[#06080d] shadow-[0_34px_120px_rgba(2,6,23,0.72)] lg:grid-cols-[0.95fr_1.05fr]',
+        className,
+      )}
+    >
+      <div className="relative flex flex-col justify-center p-6 sm:p-10 lg:p-12">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(211,47,47,0.2),transparent_40%),radial-gradient(circle_at_bottom,rgba(239,68,68,0.08),transparent_45%)]" />
+        <div className="relative mx-auto w-full max-w-md space-y-8">
+          <div className="inline-flex items-center gap-2 rounded-full border border-red-400/35 bg-red-500/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-red-100">
+            <SparklesIcon className="size-3.5" />
+            Plataforma FSPH
+          </div>
 
-            <div className="space-y-4">
-              <h1 className="max-w-xl font-display text-4xl leading-tight font-semibold tracking-tight text-foreground md:text-5xl">
-                Acesse a plataforma de TR com autenticação institucional.
-              </h1>
-              <p className="max-w-xl text-sm leading-6 text-muted-foreground md:text-base">
-                Entre com seu e-mail e senha para validar o JWT, acessar a base
-                RAG e operar a geração de Termos de Referência com segurança.
-              </p>
-            </div>
+          <div className="space-y-3">
+            <h1 className="font-display text-3xl leading-tight font-semibold tracking-tight text-white sm:text-4xl">
+              Entrar na plataforma institucional
+            </h1>
+            <p className="text-sm leading-6 text-zinc-300 sm:text-base">
+              Use suas credenciais para validar o JWT e acessar o fluxo de chat,
+              TR e administracao com seguranca.
+            </p>
+          </div>
+
+          <Card className="border-white/10 bg-white/3 shadow-none backdrop-blur-sm">
+            <CardHeader className="space-y-2 pb-4">
+              <CardTitle className="text-2xl text-white">
+                Acessar conta
+              </CardTitle>
+              <CardDescription className="text-zinc-300">
+                Informe e-mail e senha da FSPH para continuar.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-5" onSubmit={handleSubmit}>
+                <FieldGroup>
+                  <Field>
+                    <FieldLabel htmlFor="email" className="text-zinc-200">
+                      E-mail
+                    </FieldLabel>
+                    <Input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      placeholder="seu.email@fsph.gov.br"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      required
+                      className="border-white/15 bg-black/40 text-zinc-100 placeholder:text-zinc-500"
+                    />
+                  </Field>
+
+                  <Field>
+                    <FieldLabel htmlFor="password" className="text-zinc-200">
+                      Senha
+                    </FieldLabel>
+                    <Input
+                      id="password"
+                      type="password"
+                      autoComplete="current-password"
+                      placeholder="Sua senha institucional"
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      required
+                      className="border-white/15 bg-black/40 text-zinc-100 placeholder:text-zinc-500"
+                    />
+                  </Field>
+
+                  {errorMessage ? (
+                    <p className="rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+                      {errorMessage}
+                    </p>
+                  ) : null}
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-[linear-gradient(120deg,#ef4444,#dc2626_45%,#b91c1c)] text-white hover:brightness-110"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Entrando...' : 'Acessar plataforma'}
+                  </Button>
+
+                  <FieldSeparator className="border-white/15 text-zinc-400">
+                    Autenticacao segura
+                  </FieldSeparator>
+
+                  <FieldDescription className="text-center text-xs leading-5 text-zinc-400">
+                    O acesso e validado no backend via JWT, e a sessao e mantida
+                    localmente apenas enquanto o token estiver valido.
+                  </FieldDescription>
+                </FieldGroup>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      <div className="relative min-h-75 overflow-hidden p-6 sm:min-h-95 sm:p-10 lg:min-h-185 lg:p-12">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_24%,rgba(255,255,255,0.95),rgba(251,113,133,0.28)_32%,transparent_60%),linear-gradient(125deg,#05070b_18%,#190707_50%,#290303_68%,#5f1010_100%)]" />
+        <div className="absolute -right-24 top-8 h-105 w-105 rounded-full border border-white/20 bg-white/6 blur-[1px]" />
+        <div className="absolute -left-32 -bottom-18 h-85 w-85 rounded-full border border-red-300/20 bg-red-500/10" />
+
+        <div className="relative flex h-full flex-col justify-between gap-10">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-black/25 px-3 py-1 text-xs uppercase tracking-[0.16em] text-zinc-200">
+            Painel FSPH
+          </div>
+
+          <div className="space-y-4">
+            <h2 className="max-w-xl font-display text-3xl leading-tight font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
+              Segurança institucional com experiência moderna.
+            </h2>
+            <p className="max-w-lg text-sm leading-6 text-zinc-200/90 sm:text-base">
+              Uma entrada unica para autenticar, carregar seu perfil e iniciar
+              as operacoes de TR no ambiente administrativo da FSPH.
+            </p>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-3">
@@ -73,19 +186,19 @@ export function LoginForm({ className }: LoginFormProps) {
               },
               {
                 title: 'Fluxo unico',
-                description: 'Chat, TR e administracao em um só painel.',
+                description: 'Chat, TR e administracao no mesmo painel.',
                 icon: ArrowRightIcon,
               },
             ].map((item) => (
               <div
                 key={item.title}
-                className="rounded-2xl border border-white/60 bg-white/70 p-4 backdrop-blur"
+                className="rounded-2xl border border-white/15 bg-black/30 p-4 backdrop-blur"
               >
-                <item.icon className="size-5 text-primary" />
-                <p className="mt-3 text-sm font-semibold text-foreground">
+                <item.icon className="size-5 text-red-300" />
+                <p className="mt-3 text-sm font-semibold text-zinc-100">
                   {item.title}
                 </p>
-                <p className="mt-1 text-sm leading-5 text-muted-foreground">
+                <p className="mt-1 text-sm leading-5 text-zinc-300">
                   {item.description}
                 </p>
               </div>
@@ -93,63 +206,6 @@ export function LoginForm({ className }: LoginFormProps) {
           </div>
         </div>
       </div>
-
-      <Card className="border-border/70 bg-card/95 shadow-[0_16px_48px_rgba(17,24,39,0.12)] backdrop-blur">
-        <CardHeader className="space-y-2">
-          <CardTitle className="text-2xl">Entrar na plataforma</CardTitle>
-          <CardDescription>
-            Use suas credenciais da FSPH para acessar a area autenticada.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-5" onSubmit={handleSubmit}>
-            <FieldGroup>
-              <Field>
-                <FieldLabel htmlFor="email">E-mail</FieldLabel>
-                <Input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="seu.email@fsph.gov.br"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  required
-                />
-              </Field>
-
-              <Field>
-                <FieldLabel htmlFor="password">Senha</FieldLabel>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete="current-password"
-                  placeholder="Sua senha institucional"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  required
-                />
-              </Field>
-
-              {errorMessage ? (
-                <p className="rounded-xl border border-destructive/20 bg-destructive/5 px-3 py-2 text-sm text-destructive">
-                  {errorMessage}
-                </p>
-              ) : null}
-
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Entrando...' : 'Acessar plataforma'}
-              </Button>
-
-              <FieldSeparator>Autenticacao segura</FieldSeparator>
-
-              <FieldDescription className="text-center text-xs leading-5">
-                O acesso é validado no backend via JWT, e a sessão é mantida de
-                forma local apenas enquanto o token for válido.
-              </FieldDescription>
-            </FieldGroup>
-          </form>
-        </CardContent>
-      </Card>
     </div>
   );
 }
