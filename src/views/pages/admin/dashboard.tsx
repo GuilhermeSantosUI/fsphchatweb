@@ -1,3 +1,4 @@
+import { adminRoute } from '@/app/services/admin';
 import { AdminPageShell } from '@/views/components/admin/admin-page-shell';
 import { Badge } from '@/views/components/ui/badge';
 import { Button } from '@/views/components/ui/button';
@@ -25,6 +26,9 @@ type UploadedFile = {
   name: string;
   size: number;
   uploadedAt: Date;
+  file: File;
+  status: 'pending' | 'uploading' | 'uploaded' | 'indexed' | 'error';
+  errorMessage?: string;
 };
 
 const ACCEPTED_TYPES = '.pdf,.docx,.doc,.txt,.xlsx,.xls,.odt,.csv,.rtf,.md';
@@ -51,22 +55,130 @@ function formatBytes(bytes: number) {
 export function Attachments() {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [dragging, setDragging] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isIndexing, setIsIndexing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const addFiles = (incoming: FileList | null) => {
+  const getErrorMessage = (error: unknown) => {
+    if (
+      typeof error === 'object' &&
+      error &&
+      'response' in error &&
+      typeof (error as { response?: unknown }).response === 'object'
+    ) {
+      const response = (error as { response?: { data?: { message?: string } } })
+        .response;
+      const message = response?.data?.message;
+      if (message) return message;
+    }
+
+    if (error instanceof Error && error.message) {
+      return error.message;
+    }
+
+    return 'Falha ao processar a solicitacao.';
+  };
+
+  const triggerIndexing = async () => {
+    setIsIndexing(true);
+    setSyncError(null);
+
+    try {
+      await adminRoute.indexDocuments(false);
+      setFiles((prev) =>
+        prev.map((file) =>
+          file.status === 'uploaded' ? { ...file, status: 'indexed' } : file,
+        ),
+      );
+    } catch (error) {
+      setSyncError(getErrorMessage(error));
+    } finally {
+      setIsIndexing(false);
+    }
+  };
+
+  const uploadBatch = async (newFiles: UploadedFile[]) => {
+    if (!newFiles.length) return;
+
+    setIsUploading(true);
+    setSyncError(null);
+
+    for (const file of newFiles) {
+      setFiles((prev) =>
+        prev.map((current) =>
+          current.id === file.id
+            ? { ...current, status: 'uploading', errorMessage: undefined }
+            : current,
+        ),
+      );
+
+      try {
+        await adminRoute.uploadDocuments({ files: [file.file] });
+
+        setFiles((prev) =>
+          prev.map((current) =>
+            current.id === file.id
+              ? { ...current, status: 'uploaded', errorMessage: undefined }
+              : current,
+          ),
+        );
+      } catch (error) {
+        setFiles((prev) =>
+          prev.map((current) =>
+            current.id === file.id
+              ? {
+                  ...current,
+                  status: 'error',
+                  errorMessage: getErrorMessage(error),
+                }
+              : current,
+          ),
+        );
+      }
+    }
+
+    setIsUploading(false);
+    await triggerIndexing();
+  };
+
+  const addFiles = async (incoming: FileList | null) => {
     if (!incoming) return;
+
     const newFiles: UploadedFile[] = Array.from(incoming).map((file) => ({
       id: crypto.randomUUID(),
       name: file.name,
       size: file.size,
       uploadedAt: new Date(),
+      file,
+      status: 'pending',
     }));
 
     setFiles((prev) => [...prev, ...newFiles]);
+    await uploadBatch(newFiles);
   };
 
   const removeFile = (id: string) => {
     setFiles((prev) => prev.filter((file) => file.id !== id));
+  };
+
+  const pendingQueueCount = files.filter(
+    (file) => file.status === 'pending' || file.status === 'uploading',
+  ).length;
+
+  const getStatusLabel = (status: UploadedFile['status']) => {
+    if (status === 'pending') return 'Na fila';
+    if (status === 'uploading') return 'Enviando';
+    if (status === 'uploaded') return 'Enviado';
+    if (status === 'indexed') return 'Indexado';
+    return 'Falha';
+  };
+
+  const getStatusTone = (status: UploadedFile['status']) => {
+    if (status === 'indexed') return 'success';
+    if (status === 'error') return 'destructive';
+    if (status === 'uploading' || status === 'pending') return 'warning';
+    return 'default';
   };
 
   return (
@@ -80,13 +192,20 @@ export function Attachments() {
       badge="RAG habilitado"
       actions={
         <>
-          <Button variant="outline">
+          <Button
+            variant="outline"
+            onClick={triggerIndexing}
+            disabled={isUploading || isIndexing || files.length === 0}
+          >
             <FolderSyncIcon className="size-4" />
-            Sincronizar base
+            {isIndexing ? 'Sincronizando...' : 'Sincronizar base'}
           </Button>
-          <Button onClick={() => inputRef.current?.click()}>
+          <Button
+            onClick={() => inputRef.current?.click()}
+            disabled={isUploading}
+          >
             <UploadCloudIcon className="size-4" />
-            Enviar documentos
+            {isUploading ? 'Enviando...' : 'Enviar documentos'}
           </Button>
         </>
       }
@@ -99,9 +218,9 @@ export function Attachments() {
         },
         {
           label: 'Fila de ingestao',
-          value: `${files.length}`,
+          value: `${pendingQueueCount}`,
           description: 'Arquivos aguardando processamento e validacao.',
-          tone: files.length ? 'warning' : 'default',
+          tone: pendingQueueCount ? 'warning' : 'default',
         },
         {
           label: 'Ultima atualizacao',
@@ -173,8 +292,15 @@ export function Attachments() {
               multiple
               accept={ACCEPTED_TYPES}
               className="hidden"
-              onChange={(event) => addFiles(event.target.files)}
+              onChange={async (event) => {
+                await addFiles(event.target.files);
+                event.currentTarget.value = '';
+              }}
             />
+
+            {syncError ? (
+              <p className="text-xs text-destructive">{syncError}</p>
+            ) : null}
           </CardContent>
         </Card>
 
@@ -227,16 +353,21 @@ export function Attachments() {
                   </p>
                 </div>
                 <Badge
-                  variant="outline"
-                  className="border-primary/30 bg-primary/5 text-xs text-primary"
+                  variant={
+                    getStatusTone(file.status) === 'destructive'
+                      ? 'destructive'
+                      : 'outline'
+                  }
+                  className="text-xs"
                 >
-                  Aguardando
+                  {getStatusLabel(file.status)}
                 </Badge>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="size-7 text-muted-foreground hover:text-destructive"
                   onClick={() => removeFile(file.id)}
+                  disabled={file.status === 'uploading'}
                 >
                   <Trash2Icon className="size-4" />
                 </Button>
