@@ -1,27 +1,10 @@
 import { useAuth } from '@/app/context/auth';
 import { cn } from '@/app/utils';
 import { Button } from '@/views/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/views/components/ui/card';
-import {
-  Field,
-  FieldDescription,
-  FieldGroup,
-  FieldLabel,
-  FieldSeparator,
-} from '@/views/components/ui/field';
+import { Card, CardContent } from '@/views/components/ui/card';
+import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator } from '@/views/components/ui/field';
 import { Input } from '@/views/components/ui/input';
-import {
-  ArrowRightIcon,
-  BadgeCheckIcon,
-  ShieldCheckIcon,
-  SparklesIcon,
-} from 'lucide-react';
+import { ArrowRightIcon, BadgeCheckIcon, ShieldCheckIcon, SparklesIcon } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -57,7 +40,7 @@ export function LoginForm({ className }: LoginFormProps) {
   return (
     <div
       className={cn(
-        'grid overflow-hidden rounded-[30px] border border-white/10 bg-[#06080d] shadow-[0_34px_120px_rgba(2,6,23,0.72)] lg:grid-cols-[0.95fr_1.05fr]',
+        'grid overflow-hidden bg-[#06080d] shadow-[0_34px_120px_rgba(2,6,23,0.72)] lg:grid-cols-[0.95fr_1.05fr]',
         className,
       )}
     >
@@ -79,16 +62,8 @@ export function LoginForm({ className }: LoginFormProps) {
             </p>
           </div>
 
-          <Card className="border-white/10 bg-white/3 shadow-none backdrop-blur-sm">
-            <CardHeader className="space-y-2 pb-4">
-              <CardTitle className="text-2xl text-white">
-                Acessar conta
-              </CardTitle>
-              <CardDescription className="text-zinc-300">
-                Informe e-mail e senha da FSPH para continuar.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <Card className="bg-transparent shadow-none backdrop-blur-sm">
+            <CardContent className='px-0'>
               <form className="space-y-5" onSubmit={handleSubmit}>
                 <FieldGroup>
                   <Field>
@@ -152,7 +127,7 @@ export function LoginForm({ className }: LoginFormProps) {
         </div>
       </div>
 
-      <div className="relative min-h-75 overflow-hidden p-6 sm:min-h-95 sm:p-10 lg:min-h-185 lg:p-12">
+      <div className="relative border-l border-gray-800 min-h-75 overflow-hidden p-6 sm:min-h-95 sm:p-10 lg:min-h-185 lg:p-12">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_72%_24%,rgba(255,255,255,0.95),rgba(251,113,133,0.28)_32%,transparent_60%),linear-gradient(125deg,#05070b_18%,#190707_50%,#290303_68%,#5f1010_100%)]" />
         <div className="absolute -right-24 top-8 h-105 w-105 rounded-full border border-white/20 bg-white/6 blur-[1px]" />
         <div className="absolute -left-32 -bottom-18 h-85 w-85 rounded-full border border-red-300/20 bg-red-500/10" />
