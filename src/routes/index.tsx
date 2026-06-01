@@ -7,13 +7,7 @@ import { LegalReviewPage } from '@/views/pages/admin/legal-review';
 import { AdminOverviewPage } from '@/views/pages/admin/overview';
 import { SectorRoutingPage } from '@/views/pages/admin/sector-routing';
 import { LoginPage } from '@/views/pages/auth/login';
-import {
-  BrowserRouter,
-  Navigate,
-  Outlet,
-  Route,
-  Routes,
-} from 'react-router-dom';
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 
 function RouteLoadingScreen() {
   return (
@@ -69,7 +63,7 @@ export function Router() {
         <Route element={<GuestOnly />}>
           <Route path="/login" element={<LoginPage />} />
         </Route>
-        <Route element={<RequireAuth />}>
+        <Route >
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="visao-geral" replace />} />
             <Route path="visao-geral" element={<AdminOverviewPage />} />

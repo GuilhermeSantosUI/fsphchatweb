@@ -141,13 +141,9 @@ export function AdminChat() {
     return options[Math.floor(Math.random() * options.length)];
   };
 
-  function handleEditorChange(value: unknown) {
-    if (suggestionText) {
-      const text = typeof value === 'string' ? value : '';
-      if (text !== suggestionText) {
-        setSuggestionText(null);
-      }
-    }
+  function handleEditorChange(event: Parameters<typeof onChange>[0]) {
+    clearSuggestionAnimation();
+    onChange(event);
   }
 
   useEffect(() => {
