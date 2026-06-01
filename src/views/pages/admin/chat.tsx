@@ -1,12 +1,42 @@
 import { generateTrRoute } from '@/app/services/generate-tr';
 import { cn } from '@/app/utils';
 import AnimatedShinyText from '@/views/components/ui/animated-shiny-text';
-import { ChatInput, ChatInputEditor, ChatInputGroupAddon, ChatInputSubmitButton, useChatInput } from '@/views/components/ui/chat-input';
-import { ChatMessage, ChatMessageAction, ChatMessageActions, ChatMessageAuthor, ChatMessageAvatar, ChatMessageAvatarAssistantIcon, ChatMessageAvatarUserIcon, ChatMessageContainer, ChatMessageContent, ChatMessageHeader, ChatMessageMarkdown, ChatMessageTimestamp } from '@/views/components/ui/chat-message';
-import { ChatMessageArea, ChatMessageAreaContent, ChatMessageAreaScrollButton } from '@/views/components/ui/chat-message-area';
-import { ChatSuggestion, ChatSuggestions, ChatSuggestionsContent, ChatSuggestionsHeader, ChatSuggestionsTitle } from '@/views/components/ui/chat-suggestions';
+import { Button } from '@/views/components/ui/button';
+import {
+  ChatInput,
+  ChatInputEditor,
+  ChatInputGroupAddon,
+  ChatInputSubmitButton,
+  useChatInput,
+} from '@/views/components/ui/chat-input';
+import {
+  ChatMessage,
+  ChatMessageAction,
+  ChatMessageActions,
+  ChatMessageAuthor,
+  ChatMessageAvatar,
+  ChatMessageAvatarAssistantIcon,
+  ChatMessageAvatarUserIcon,
+  ChatMessageContainer,
+  ChatMessageContent,
+  ChatMessageHeader,
+  ChatMessageTimestamp,
+} from '@/views/components/ui/chat-message';
+import {
+  ChatMessageArea,
+  ChatMessageAreaContent,
+  ChatMessageAreaScrollButton,
+} from '@/views/components/ui/chat-message-area';
+import {
+  ChatSuggestion,
+  ChatSuggestions,
+  ChatSuggestionsContent,
+  ChatSuggestionsHeader,
+  ChatSuggestionsTitle,
+} from '@/views/components/ui/chat-suggestions';
+import { HtmlOrMarkdown } from '@/views/components/ui/html-or-markdown';
 import { TextAnimate } from '@/views/components/ui/text-animate';
-import { Copy, ThumbsUp } from 'lucide-react';
+import { Copy, Download, ThumbsUp } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useStickToBottomContext } from 'use-stick-to-bottom';
 
@@ -110,6 +140,15 @@ export function AdminChat() {
 
     return options[Math.floor(Math.random() * options.length)];
   };
+
+  function handleEditorChange(value: unknown) {
+    if (suggestionText) {
+      const text = typeof value === 'string' ? value : '';
+      if (text !== suggestionText) {
+        setSuggestionText(null);
+      }
+    }
+  }
 
   useEffect(() => {
     if (!isLoading) {
@@ -217,10 +256,21 @@ export function AdminChat() {
     setSuggestionText(suggestion);
   };
 
-  const handleEditorChange = (event: Parameters<typeof onChange>[0]) => {
-    clearSuggestionAnimation();
+  const handleDownloadHTML = (content: string) => {
+    const blob = new Blob([content], { type: 'text/html;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `TR_${new Date().toISOString()}.html`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
-    onChange(event);
+  const isHtml = (content: string): boolean => {
+    const htmlTagRegex = /<[a-z][\s\S]*>/i;
+    return htmlTagRegex.test(content);
   };
 
   return (
@@ -270,10 +320,25 @@ export function AdminChat() {
                     {message.parts.map((part, index) => {
                       if (part.type === 'text') {
                         return (
-                          <ChatMessageMarkdown
+                          <div
                             key={`${message.id}-text-${index}`}
-                            content={part.text}
-                          />
+                            className="w-full space-y-3"
+                          >
+                            {isHtml(part.text) &&
+                            message.role === 'assistant' ? (
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDownloadHTML(part.text)}
+                                >
+                                  <Download className="size-4 mr-2" />
+                                  Baixar HTML
+                                </Button>
+                              </div>
+                            ) : null}
+                            <HtmlOrMarkdown content={part.text} />
+                          </div>
                         );
                       }
 

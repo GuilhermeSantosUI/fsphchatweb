@@ -1,4 +1,3 @@
-import { Badge } from '@/views/components/ui/badge';
 import { Button } from '@/views/components/ui/button';
 import {
   Card,
@@ -11,40 +10,11 @@ import {
   ArrowRightIcon,
   BotIcon,
   FileCheck2Icon,
-  GavelIcon,
-  SendIcon,
+  SparklesIcon,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { AdminPageShell } from '@/views/components/admin/admin-page-shell';
-
-const todayPipeline = [
-  {
-    title: 'TR 028/2026 · Aquisicao de medicamentos estrategicos',
-    status: 'Em analise tecnica',
-    owner: 'Diretoria assistencial',
-    sla: 'Triagem ate 14:30',
-  },
-  {
-    title: 'TR 031/2026 · Servicos de manutencao hospitalar',
-    status: 'Aguardando parecer juridico',
-    owner: 'Juridico',
-    sla: 'Parecer ate amanha',
-  },
-  {
-    title: 'TR 034/2026 · Kit de coleta laboratorial',
-    status: 'Pronto para encaminhamento',
-    owner: 'Compras e financeiro',
-    sla: 'Distribuicao em 2h',
-  },
-];
-
-const sectors = [
-  { name: 'Juridico', volume: '5 pareceres', eta: 'SLA medio 11h' },
-  { name: 'Compras', volume: '8 validacoes', eta: 'SLA medio 6h' },
-  { name: 'Financeiro', volume: '3 confirmacoes', eta: 'SLA medio 4h' },
-  { name: 'Controle interno', volume: '2 revisoes', eta: 'SLA medio 8h' },
-];
 
 export function AdminOverviewPage() {
   return (
@@ -54,7 +24,7 @@ export function AdminOverviewPage() {
         { label: 'Painel executivo' },
       ]}
       title="Painel executivo do TR"
-      description="Acompanhe a base RAG, a geracao assistida e a esteira de analise do Termo de Referencia em um unico fluxo operacional para a FSPH."
+      description="Gerencia base de documentos, geração assistida de Termos de Referência e personalidades para customização de comportamento."
       badge="Operação ativa"
       actions={
         <>
@@ -62,8 +32,8 @@ export function AdminOverviewPage() {
             <Link to="/admin/anexos">Base documental</Link>
           </Button>
           <Button asChild>
-            <Link to="/admin/analises">
-              Acompanhar analises
+            <Link to="/admin/chat">
+              Gerar TR
               <ArrowRightIcon className="size-4" />
             </Link>
           </Button>
@@ -71,135 +41,102 @@ export function AdminOverviewPage() {
       }
       stats={[
         {
-          label: 'TRs gerados hoje',
+          label: 'TRs gerados',
           value: '12',
           description: 'Documentos produzidos pela IA com contexto validado.',
           tone: 'primary',
         },
         {
-          label: 'Em analise',
-          value: '14',
-          description: 'Pedidos aguardando triagem tecnica e distribuicao.',
-          tone: 'warning',
-        },
-        {
-          label: 'No juridico',
-          value: '5',
-          description: 'TRs em parecer formal para mitigacao de risco.',
-          tone: 'default',
-        },
-        {
-          label: 'Prontos para setores',
-          value: '8',
-          description: 'Pacotes completos para compras, financeiro e controle.',
+          label: 'Personalidades',
+          value: '3',
+          description: 'Pre-prompts disponíveis para customizar o assistente.',
           tone: 'success',
+        },
+        {
+          label: 'Documentos na base',
+          value: '47',
+          description: 'Documentos indexados para contexto de IA.',
+          tone: 'default',
         },
       ]}
     >
       <div className="grid gap-6 xl:grid-cols-[1.6fr_1fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Fluxo operacional do dia</CardTitle>
+            <CardTitle>Fluxo operacional</CardTitle>
             <CardDescription>
-              Itens gerados pela IA que ja entraram na esteira de analise e
-              exigem movimentacao entre setores.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {todayPipeline.map((item) => (
-              <div
-                key={item.title}
-                className="flex flex-col gap-3 rounded-xl border border-border/70 bg-muted/30 p-4 lg:flex-row lg:items-center lg:justify-between"
-              >
-                <div className="space-y-1">
-                  <p className="font-medium text-foreground">{item.title}</p>
-                  <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                    <Badge variant="secondary">{item.status}</Badge>
-                    <span>{item.owner}</span>
-                  </div>
-                </div>
-                <div className="text-sm text-muted-foreground">{item.sla}</div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Esteira automatizada</CardTitle>
-            <CardDescription>
-              Sequencia padrao apos a conclusao do TR pela inteligencia
-              artificial.
+              Pipeline de geração assistida do Termo de Referência.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-start gap-3 rounded-xl border p-4">
               <BotIcon className="mt-0.5 size-5 text-primary" />
               <div>
-                <p className="font-medium">Geracao assistida</p>
+                <p className="font-medium">1. Geracao assistida</p>
                 <p className="text-sm text-muted-foreground">
-                  A IA estrutura o TR com base na base vetorial e nos anexos
-                  institucionais.
+                  Descreva a necessidade e a IA estrutura o TR com base na base
+                  documental e na personalidade selecionada.
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-3 rounded-xl border p-4">
               <FileCheck2Icon className="mt-0.5 size-5 text-primary" />
               <div>
-                <p className="font-medium">Triagem e analise</p>
+                <p className="font-medium">2. Revisão e customização</p>
                 <p className="text-sm text-muted-foreground">
-                  O pedido entra na fila para validacao tecnica, aderencia e
-                  completude do escopo.
+                  Edite o documento gerado, ajuste conforme suas necessidades e
+                  exporte em diferentes formatos.
                 </p>
               </div>
             </div>
             <div className="flex items-start gap-3 rounded-xl border p-4">
-              <GavelIcon className="mt-0.5 size-5 text-primary" />
+              <SparklesIcon className="mt-0.5 size-5 text-primary" />
               <div>
-                <p className="font-medium">Parecer juridico</p>
+                <p className="font-medium">3. Personalização contínua</p>
                 <p className="text-sm text-muted-foreground">
-                  Duvidas legais, riscos contratuais e observacoes normativas
-                  ficam centralizados.
-                </p>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 rounded-xl border p-4">
-              <SendIcon className="mt-0.5 size-5 text-primary" />
-              <div>
-                <p className="font-medium">Distribuicao setorial</p>
-                <p className="text-sm text-muted-foreground">
-                  Compras, financeiro e controle recebem o TR com status e
-                  responsaveis definidos.
+                  Crie suas próprias personalidades com pre-prompts específicos
+                  para diferentes contextos e departamentos.
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Capacidade por setor</CardTitle>
-          <CardDescription>
-            Fila atual dos setores responsaveis que recebem TRs apos a analise
-            juridica.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {sectors.map((sector) => (
-            <div
-              key={sector.name}
-              className="rounded-xl border border-border/70 bg-muted/20 p-4"
-            >
-              <p className="text-sm text-muted-foreground">{sector.name}</p>
-              <p className="mt-2 text-xl font-semibold text-foreground">
-                {sector.volume}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">{sector.eta}</p>
-            </div>
-          ))}
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Próximas ações</CardTitle>
+            <CardDescription>
+              Explore os principais recursos da plataforma.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Link to="/admin/chat">
+              <div className="rounded-lg border p-3 hover:bg-muted cursor-pointer transition-colors">
+                <p className="font-medium text-sm">Gerar novo TR</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Comece uma nova sessão de geração assistida
+                </p>
+              </div>
+            </Link>
+            <Link to="/admin/anexos">
+              <div className="rounded-lg border p-3 hover:bg-muted cursor-pointer transition-colors">
+                <p className="font-medium text-sm">Gerenciar documentos</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Atualize a base de contexto para a IA
+                </p>
+              </div>
+            </Link>
+            <Link to="/admin/personalidades">
+              <div className="rounded-lg border p-3 hover:bg-muted cursor-pointer transition-colors">
+                <p className="font-medium text-sm">Criar personalidade</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Configure um novo pre-prompt customizado
+                </p>
+              </div>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
     </AdminPageShell>
   );
 }
