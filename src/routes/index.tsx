@@ -3,15 +3,9 @@ import { AdminChat } from '@/views/pages/admin/chat';
 import { Attachments } from '@/views/pages/admin/dashboard';
 import { AdminLayout } from '@/views/pages/admin/layout';
 import { AdminOverviewPage } from '@/views/pages/admin/overview';
-import { SectorRoutingPage } from '@/views/pages/admin/sector-routing';
+import { PersonalitiesPage } from '@/views/pages/admin/personalities';
 import { LoginPage } from '@/views/pages/auth/login';
-import {
-  BrowserRouter,
-  Navigate,
-  Outlet,
-  Route,
-  Routes,
-} from 'react-router-dom';
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 
 function RouteLoadingScreen() {
   return (
@@ -73,7 +67,7 @@ export function Router() {
             <Route path="visao-geral" element={<AdminOverviewPage />} />
             <Route path="anexos" element={<Attachments />} />
             <Route path="chat" element={<AdminChat />} />
-            <Route path="personalidades" element={<SectorRoutingPage />} />
+            <Route path="personalidades" element={<PersonalitiesPage />} />
           </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
