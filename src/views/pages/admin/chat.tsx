@@ -1,4 +1,4 @@
-import { generateTrRoute } from '@/app/services/generate-tr';
+import { chatRoute } from '@/app/services/chat';
 import { cn } from '@/app/utils';
 import AnimatedShinyText from '@/views/components/ui/animated-shiny-text';
 import { Button } from '@/views/components/ui/button';
@@ -198,16 +198,17 @@ export function AdminChat() {
       setIsLoading(true);
 
       try {
-        const response = await generateTrRoute.generateTr({
+        const response = await chatRoute.legacyChat({
           question,
           top_k: DEFAULT_TOP_K,
         });
-
         const assistantText =
           typeof response.html === 'string' && response.html.trim().length > 0
             ? response.html
             : 'Não consegui gerar o TR neste momento. Tente novamente com mais detalhes da contratação.';
-
+        typeof response.answer === 'string' && response.answer.trim().length > 0
+          ? response.answer
+          : 'Não consegui gerar a resposta neste momento. Tente novamente com mais detalhes.';
         setMessages((previous) => [
           ...previous,
           createMessage('assistant', assistantText),
@@ -321,7 +322,7 @@ export function AdminChat() {
                             className="w-full space-y-3"
                           >
                             {isHtml(part.text) &&
-                            message.role === 'assistant' ? (
+                              message.role === 'assistant' ? (
                               <div className="flex gap-2">
                                 <Button
                                   variant="outline"
