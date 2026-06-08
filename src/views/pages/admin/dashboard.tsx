@@ -31,9 +31,9 @@ type UploadedFile = {
   errorMessage?: string;
 };
 
-const ACCEPTED_TYPES = '.pdf,.docx,.doc,.txt,.xlsx,.xls,.odt,.csv,.rtf,.md';
+const ACCEPTED_TYPES = '.pdf,.docx,.txt';
 
-const ACCEPTED_LABELS = ['PDF', 'DOCX', 'TXT', 'XLSX', 'ODT', 'CSV', 'RTF'];
+const ACCEPTED_LABELS = ['PDF', 'DOCX', 'TXT'];
 
 function getFileIcon(name: string) {
   const ext = name.split('.').pop()?.toLowerCase();
@@ -56,46 +56,46 @@ export function Attachments() {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [dragging, setDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [isIndexing, setIsIndexing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      try {
-        const response = await adminRoute.listDocuments();
-        let docList: any[] = [];
-        if (Array.isArray(response)) {
-          docList = response;
-        } else if (response && typeof response === 'object') {
-          const possibleArray = response.documentos || response.files || response.arquivos || response.data;
-          if (Array.isArray(possibleArray)) {
-            docList = possibleArray;
-          } else {
-            const arrays = Object.values(response).filter(Array.isArray);
-            if (arrays.length > 0) {
-              docList = arrays[0];
-            }
+  const fetchDocuments = async () => {
+    try {
+      const response = await adminRoute.listDocuments();
+      let docList: any[] = [];
+      if (Array.isArray(response)) {
+        docList = response;
+      } else if (response && typeof response === 'object') {
+        const possibleArray = response.documentos || response.files || response.arquivos || response.data;
+        if (Array.isArray(possibleArray)) {
+          docList = possibleArray;
+        } else {
+          const arrays = Object.values(response).filter(Array.isArray);
+          if (arrays.length > 0) {
+            docList = arrays[0];
           }
         }
-
-        const mapped = docList.map((doc: any, index: number) => {
-          const name = typeof doc === 'string' ? doc : (doc.nome_arquivo || doc.name || doc.filename || `documento-${index}`);
-          const size = typeof doc === 'object' && typeof doc.size === 'number' ? doc.size : 0;
-          return {
-            id: name,
-            name,
-            size,
-            uploadedAt: new Date(),
-            status: 'indexed' as const,
-          };
-        });
-        setFiles(mapped);
-      } catch (error) {
-        console.error('Erro ao listar documentos:', error);
-        setSyncError('Erro ao carregar a lista de documentos.');
       }
-    };
+
+      const mapped = docList.map((doc: any, index: number) => {
+        const name = typeof doc === 'string' ? doc : (doc.nome || doc.nome_arquivo || doc.name || doc.filename || `documento-${index}`);
+        const size = typeof doc === 'object' && typeof doc.size === 'number' ? doc.size : 0;
+        return {
+          id: name,
+          name,
+          size,
+          uploadedAt: new Date(),
+          status: 'indexed' as const,
+        };
+      });
+      setFiles(mapped);
+    } catch (error) {
+      console.error('Erro ao listar documentos:', error);
+      setSyncError('Erro ao carregar a lista de documentos.');
+    }
+  };
+
+  useEffect(() => {
     fetchDocuments();
   }, []);
 
@@ -117,24 +117,6 @@ export function Attachments() {
     }
 
     return 'Falha ao processar a solicitacao.';
-  };
-
-  const triggerIndexing = async () => {
-    setIsIndexing(true);
-    setSyncError(null);
-
-    try {
-      await adminRoute.indexDocuments(false);
-      setFiles((prev) =>
-        prev.map((file) =>
-          file.status === 'uploaded' ? { ...file, status: 'indexed' } : file,
-        ),
-      );
-    } catch (error) {
-      setSyncError(getErrorMessage(error));
-    } finally {
-      setIsIndexing(false);
-    }
   };
 
   const uploadBatch = async (newFiles: UploadedFile[]) => {
@@ -179,7 +161,7 @@ export function Attachments() {
     }
 
     setIsUploading(false);
-    await triggerIndexing();
+    await fetchDocuments();
   };
 
   const addFiles = async (incoming: FileList | null) => {
@@ -199,16 +181,18 @@ export function Attachments() {
   };
 
   const removeFile = async (file: UploadedFile) => {
-    if (file.status === 'uploaded' || file.status === 'indexed') {
-      try {
-        setSyncError(null);
-        await adminRoute.removeDocument(file.name);
+    if (window.confirm(`Tem certeza que deseja excluir o documento ${file.name}?`)) {
+      if (file.status === 'uploaded' || file.status === 'indexed') {
+        try {
+          setSyncError(null);
+          await adminRoute.removeDocument(file.name);
+          await fetchDocuments();
+        } catch (error) {
+          setSyncError(getErrorMessage(error));
+        }
+      } else {
         setFiles((prev) => prev.filter((f) => f.id !== file.id));
-      } catch (error) {
-        setSyncError(getErrorMessage(error));
       }
-    } else {
-      setFiles((prev) => prev.filter((f) => f.id !== file.id));
     }
   };
 
@@ -246,14 +230,6 @@ export function Attachments() {
       badge="RAG habilitado"
       actions={
         <>
-          <Button
-            variant="outline"
-            onClick={triggerIndexing}
-            disabled={isUploading || isIndexing || files.length === 0}
-          >
-            <FolderSyncIcon className="size-4" />
-            {isIndexing ? 'Sincronizando...' : 'Sincronizar base'}
-          </Button>
           <Button
             onClick={() => inputRef.current?.click()}
             disabled={isUploading}
@@ -327,8 +303,7 @@ export function Attachments() {
                   Arraste arquivos aqui ou clique para selecionar
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  PDF, DOCX, TXT, XLSX, ODT e arquivos complementares de ate 20
-                  MB
+                  PDF, DOCX e TXT de até 20 MB
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-1">

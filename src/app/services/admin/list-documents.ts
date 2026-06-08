@@ -1,6 +1,6 @@
 import { api } from '@/app/services';
 
 export async function listDocuments() {
-  const { data } = await api.get('/admin/listar-documentos');
+  const { data } = await api.get('/documentos/listar');
   return data;
 }
