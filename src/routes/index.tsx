@@ -61,7 +61,7 @@ export function Router() {
         <Route element={<GuestOnly />}>
           <Route path="/login" element={<LoginPage />} />
         </Route>
-        <Route >
+        <Route element={<RequireAuth />} >
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<Navigate to="visao-geral" replace />} />
             <Route path="visao-geral" element={<AdminOverviewPage />} />
