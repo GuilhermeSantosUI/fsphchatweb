@@ -203,12 +203,9 @@ export function AdminChat() {
           top_k: DEFAULT_TOP_K,
         });
         const assistantText =
-          typeof response.html === 'string' && response.html.trim().length > 0
-            ? response.html
-            : 'Não consegui gerar o TR neste momento. Tente novamente com mais detalhes da contratação.';
-        typeof response.answer === 'string' && response.answer.trim().length > 0
-          ? response.answer
-          : 'Não consegui gerar a resposta neste momento. Tente novamente com mais detalhes.';
+          typeof response.answer === 'string' && response.answer.trim().length > 0
+            ? response.answer
+            : 'Não consegui gerar a resposta neste momento. Tente novamente com mais detalhes.';
         setMessages((previous) => [
           ...previous,
           createMessage('assistant', assistantText),

@@ -46,7 +46,7 @@ function GuestOnly() {
     return <RouteLoadingScreen />;
   }
 
-  if (!session) {
+  if (session) {
     return <Navigate to="/admin/visao-geral" replace />;
   }
 
