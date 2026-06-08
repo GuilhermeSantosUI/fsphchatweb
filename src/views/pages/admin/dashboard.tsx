@@ -19,14 +19,14 @@ import {
   Trash2Icon,
   UploadCloudIcon,
 } from 'lucide-react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type UploadedFile = {
   id: string;
   name: string;
   size: number;
   uploadedAt: Date;
-  file: File;
+  file?: File;
   status: 'pending' | 'uploading' | 'uploaded' | 'indexed' | 'error';
   errorMessage?: string;
 };
@@ -59,6 +59,45 @@ export function Attachments() {
   const [isIndexing, setIsIndexing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        const response = await adminRoute.listDocuments();
+        let docList: any[] = [];
+        if (Array.isArray(response)) {
+          docList = response;
+        } else if (response && typeof response === 'object') {
+          const possibleArray = response.documentos || response.files || response.arquivos || response.data;
+          if (Array.isArray(possibleArray)) {
+            docList = possibleArray;
+          } else {
+            const arrays = Object.values(response).filter(Array.isArray);
+            if (arrays.length > 0) {
+              docList = arrays[0];
+            }
+          }
+        }
+
+        const mapped = docList.map((doc: any, index: number) => {
+          const name = typeof doc === 'string' ? doc : (doc.nome_arquivo || doc.name || doc.filename || `documento-${index}`);
+          const size = typeof doc === 'object' && typeof doc.size === 'number' ? doc.size : 0;
+          return {
+            id: name,
+            name,
+            size,
+            uploadedAt: new Date(),
+            status: 'indexed' as const,
+          };
+        });
+        setFiles(mapped);
+      } catch (error) {
+        console.error('Erro ao listar documentos:', error);
+        setSyncError('Erro ao carregar a lista de documentos.');
+      }
+    };
+    fetchDocuments();
+  }, []);
 
   const getErrorMessage = (error: unknown) => {
     if (
@@ -114,7 +153,8 @@ export function Attachments() {
       );
 
       try {
-        await adminRoute.uploadDocuments({ files: [file.file] });
+        if (!file.file) throw new Error('Arquivo não disponível para upload.');
+        await adminRoute.uploadDocument(file.file);
 
         setFiles((prev) =>
           prev.map((current) =>
@@ -158,9 +198,23 @@ export function Attachments() {
     await uploadBatch(newFiles);
   };
 
-  const removeFile = (id: string) => {
-    setFiles((prev) => prev.filter((file) => file.id !== id));
+  const removeFile = async (file: UploadedFile) => {
+    if (file.status === 'uploaded' || file.status === 'indexed') {
+      try {
+        setSyncError(null);
+        await adminRoute.removeDocument(file.name);
+        setFiles((prev) => prev.filter((f) => f.id !== file.id));
+      } catch (error) {
+        setSyncError(getErrorMessage(error));
+      }
+    } else {
+      setFiles((prev) => prev.filter((f) => f.id !== file.id));
+    }
   };
+
+  const totalIndexed = files.filter(
+    (file) => file.status === 'indexed' || file.status === 'uploaded',
+  ).length;
 
   const pendingQueueCount = files.filter(
     (file) => file.status === 'pending' || file.status === 'uploading',
@@ -212,7 +266,7 @@ export function Attachments() {
       stats={[
         {
           label: 'Documentos indexados',
-          value: '248',
+          value: `${totalIndexed}`,
           description: 'Arquivos com embeddings disponiveis para recuperacao.',
           tone: 'primary',
         },
@@ -366,7 +420,7 @@ export function Attachments() {
                   variant="ghost"
                   size="icon"
                   className="size-7 text-muted-foreground hover:text-destructive"
-                  onClick={() => removeFile(file.id)}
+                  onClick={() => removeFile(file)}
                   disabled={file.status === 'uploading'}
                 >
                   <Trash2Icon className="size-4" />

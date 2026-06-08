@@ -66,7 +66,7 @@ export function ChatMessages({ messages, isLoading, attachedFiles }: Props) {
 
               {!isUser && (
                 <ChatMessageAvatar className="shrink-0 mt-1 border-border">
-                  <ChatMessageAvatarAssistantIcon className="text-foreground" />
+                  <ChatMessageAvatarAssistantIcon />
                 </ChatMessageAvatar>
               )}
               {isUser && (
@@ -228,7 +228,7 @@ export function ChatMessages({ messages, isLoading, attachedFiles }: Props) {
         {isLoading && (
           <ChatMessage className="flex gap-2.5 py-1 px-0 rounded-none hover:bg-transparent flex-row">
             <ChatMessageAvatar className="shrink-0 mt-1 border-border">
-              <ChatMessageAvatarAssistantIcon className="text-foreground" />
+              <ChatMessageAvatarAssistantIcon />
             </ChatMessageAvatar>
             <div className="bg-muted/40 rounded-2xl rounded-tl-sm px-4 py-3">
               <span className="flex gap-1 items-center h-4">
