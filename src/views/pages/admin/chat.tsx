@@ -422,6 +422,9 @@ export function AdminChat() {
             <ChatInputSubmitButton className="ml-auto" />
           </ChatInputGroupAddon>
         </ChatInput>
+        <p className="mt-2 text-center text-xs text-muted-foreground/70">
+          A inteligência artificial pode cometer erros ou "alucinar" informações. Verifique e analise os dados cuidadosamente antes de utilizá-los.
+        </p>
       </div>
     </div>
   );
