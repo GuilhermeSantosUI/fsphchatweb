@@ -34,9 +34,26 @@ import {
   ChatSuggestionsHeader,
   ChatSuggestionsTitle,
 } from '@/views/components/ui/chat-suggestions';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/views/components/ui/dropdown-menu';
 import { HtmlOrMarkdown } from '@/views/components/ui/html-or-markdown';
 import { TextAnimate } from '@/views/components/ui/text-animate';
-import { Copy, Download, ThumbsUp } from 'lucide-react';
+import html2pdf from 'html2pdf.js';
+import {
+  ChevronDown,
+  Copy,
+  Download,
+  FileArchive,
+  FileCode,
+  FileText,
+  FileType2,
+  ThumbsUp,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useStickToBottomContext } from 'use-stick-to-bottom';
 
@@ -205,7 +222,8 @@ export function AdminChat() {
         const assistantText =
           typeof response.html === 'string' && response.html.trim().length > 0
             ? response.html
-            : typeof response.answer === 'string' && response.answer.trim().length > 0
+            : typeof response.answer === 'string' &&
+                response.answer.trim().length > 0
               ? response.answer
               : 'Não consegui gerar a resposta neste momento. Tente novamente com mais detalhes.';
         setMessages((previous) => [
@@ -252,16 +270,88 @@ export function AdminChat() {
     setSuggestionText(suggestion);
   };
 
-  const handleDownloadHTML = (content: string) => {
-    const blob = new Blob([content], { type: 'text/html;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `TR_${new Date().toISOString()}.html`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const handleExport = async (
+    content: string,
+    format: 'html' | 'txt' | 'pdf' | 'docx',
+  ) => {
+    // Nome base para o arquivo
+    const filename = `documento_gerado_${new Date().getTime()}`;
+
+    // Função auxiliar para forçar o download no navegador
+    const downloadFile = (blob: Blob, extension: string) => {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${filename}.${extension}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    };
+
+    switch (format) {
+      case 'html': {
+        // Exportação HTML: Simplesmente pega o conteúdo e cria um Blob
+        const htmlBlob = new Blob([content], {
+          type: 'text/html;charset=utf-8',
+        });
+        downloadFile(htmlBlob, 'html');
+        break;
+      }
+
+      case 'txt': {
+        // Exportação TXT: Precisamos remover as tags HTML para não poluir o texto
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = content;
+        const textContent = tempDiv.innerText || tempDiv.textContent || '';
+        const txtBlob = new Blob([textContent], {
+          type: 'text/plain;charset=utf-8',
+        });
+        downloadFile(txtBlob, 'txt');
+        break;
+      }
+
+      case 'docx': {
+        // Exportação DOCX (Truque sem dependências):
+        // Adicionamos cabeçalhos XML específicos que o Word reconhece.
+        const header = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head><meta charset='utf-8'><title>Documento</title></head><body>`;
+        const footer = '</body></html>';
+
+        const sourceHTML = header + content + footer;
+        // O '\ufeff' é o BOM (Byte Order Mark) para garantir que o Word leia os acentos corretamente
+        const docxBlob = new Blob(['\ufeff', sourceHTML], {
+          type: 'application/msword',
+        });
+        downloadFile(docxBlob, 'doc');
+        break;
+      }
+
+      case 'pdf': {
+        // Exportação PDF: Usamos o html2pdf.js
+        // Criamos um elemento temporário com a mesma estilização do seu componente
+        // para que o PDF saia com a mesma cara da tela.
+        const tempContainer = document.createElement('div');
+        tempContainer.innerHTML = content;
+        tempContainer.style.fontFamily = "'Georgia', 'Times New Roman', serif";
+        tempContainer.style.fontSize = '12pt';
+        tempContainer.style.lineHeight = '1.5';
+        tempContainer.style.padding = '20px';
+        tempContainer.style.color = '#000';
+
+        const opt = {
+          margin: 15,
+          filename: `${filename}.pdf`,
+          image: { type: 'jpeg', quality: 0.98 },
+          html2canvas: { scale: 2, useCORS: true },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+        };
+
+        // O html2pdf cuida do download automaticamente
+        await html2pdf().set(opt).from(tempContainer).save();
+        break;
+      }
+    }
   };
 
   const isHtml = (content: string): boolean => {
@@ -321,16 +411,59 @@ export function AdminChat() {
                             className="w-full space-y-3"
                           >
                             {isHtml(part.text) &&
-                              message.role === 'assistant' ? (
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleDownloadHTML(part.text)}
-                                >
-                                  <Download className="size-4 mr-2" />
-                                  Baixar HTML
-                                </Button>
+                            message.role === 'assistant' ? (
+                              <div className="flex gap-2 justify-end mb-2">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="font-medium"
+                                    >
+                                      <Download className="size-4 mr-2" />
+                                      Exportar Documento
+                                      <ChevronDown className="size-4 ml-2 opacity-50" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent
+                                    align="end"
+                                    className="w-48"
+                                  >
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleExport(part.text, 'html')
+                                      }
+                                    >
+                                      <FileCode className="size-4 mr-2 text-blue-500" />
+                                      Como HTML
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleExport(part.text, 'txt')
+                                      }
+                                    >
+                                      <FileText className="size-4 mr-2 text-gray-500" />
+                                      Como Texto (.txt)
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleExport(part.text, 'pdf')
+                                      }
+                                    >
+                                      <FileType2 className="size-4 mr-2 text-red-500" />
+                                      Como PDF (.pdf)
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        handleExport(part.text, 'docx')
+                                      }
+                                    >
+                                      <FileArchive className="size-4 mr-2 text-blue-600" />
+                                      Como Word (.docx)
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </div>
                             ) : null}
                             <HtmlOrMarkdown content={part.text} />
@@ -423,7 +556,9 @@ export function AdminChat() {
           </ChatInputGroupAddon>
         </ChatInput>
         <p className="mt-2 text-center text-xs text-muted-foreground/70">
-          A inteligência artificial pode cometer erros ou "alucinar" informações. Verifique e analise os dados cuidadosamente antes de utilizá-los.
+          A inteligência artificial pode cometer erros ou "alucinar"
+          informações. Verifique e analise os dados cuidadosamente antes de
+          utilizá-los.
         </p>
       </div>
     </div>

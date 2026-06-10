@@ -15,6 +15,7 @@ function isHtml(content: string): boolean {
 export const HtmlOrMarkdown = memo(
   ({ content, className }: HtmlOrMarkdownProps) => {
     const sanitizedContent = useMemo(() => {
+      // ... (Mantenha o seu código DOMPurify exatamente como está)
       if (!content) return '';
 
       if (isHtml(content)) {
@@ -73,41 +74,55 @@ export const HtmlOrMarkdown = memo(
 
     if (isHtml(content)) {
       return (
+        /* AQUI ESTÁ O SEGREDO DO VISUAL FORMAL:
+          Um container branco, com borda sutil, sombra suave e padding generoso
+          para simular uma página de documento.
+        */
         <div
-          className={className}
-          style={{
-            fontSize: '0.95rem',
-            lineHeight: '1.6',
-          }}
+          className={`bg-white border border-gray-200 shadow-sm rounded-lg p-8 sm:p-12 max-w-4xl mx-auto ${className || ''}`}
         >
           <style>{`
-            .html-content h1, .html-content h2, .html-content h3, .html-content h4, .html-content h5, .html-content h6 {
-              margin-top: 1.5em;
-              margin-bottom: 0.5em;
-              font-weight: 600;
-              line-height: 1.3;
+            .document-content {
+              font-family: 'Georgia', 'Cambria', 'Times New Roman', serif; /* Fonte formal */
+              color: #1f2937;
+              font-size: 1.05rem;
+              line-height: 1.8;
+              text-align: justify; /* Textos justificados dão ar de ofício/relatório */
             }
-            .html-content h1 { font-size: 2em; }
-            .html-content h2 { font-size: 1.5em; }
-            .html-content h3 { font-size: 1.25em; }
-            .html-content h4, .html-content h5, .html-content h6 { font-size: 1em; }
-            .html-content p { margin: 0.5em 0; }
-            .html-content ul, .html-content ol { margin: 1em 0; padding-left: 2em; }
-            .html-content li { margin: 0.25em 0; }
-            .html-content table { border-collapse: collapse; width: 100%; margin: 1em 0; }
-            .html-content th, .html-content td { border: 1px solid #ccc; padding: 0.75em; text-align: left; }
-            .html-content th { background-color: #f5f5f5; font-weight: 600; }
-            .html-content strong { font-weight: 600; }
-            .html-content em { font-style: italic; }
-            .html-content a { color: #0066cc; text-decoration: underline; }
-            .html-content blockquote { margin: 1em 0; padding-left: 1em; border-left: 3px solid #ccc; }
-            .html-content pre { background-color: #f5f5f5; padding: 1em; overflow-x: auto; border-radius: 4px; }
-            .html-content code { font-family: 'Courier New', monospace; background-color: #f5f5f5; padding: 0.2em 0.4em; border-radius: 2px; }
-            .html-content pre code { background-color: transparent; padding: 0; }
-            .html-content hr { margin: 1.5em 0; border: none; border-top: 1px solid #ccc; }
+            .document-content h1, 
+            .document-content h2, 
+            .document-content h3, 
+            .document-content h4 {
+              font-family: 'Inter', 'Helvetica Neue', sans-serif; /* Títulos limpos e modernos */
+              color: #111827;
+              margin-top: 2em;
+              margin-bottom: 0.75em;
+              font-weight: 700;
+              line-height: 1.3;
+              text-align: left;
+            }
+            .document-content h1 { font-size: 2.25em; border-bottom: 2px solid #e5e7eb; padding-bottom: 0.3em; }
+            .document-content h2 { font-size: 1.75em; border-bottom: 1px solid #f3f4f6; padding-bottom: 0.3em; }
+            .document-content h3 { font-size: 1.35em; }
+            .document-content p { margin: 1.2em 0; }
+            .document-content ul, .document-content ol { margin: 1.5em 0; padding-left: 2.5em; text-align: left; }
+            .document-content li { margin: 0.5em 0; }
+            .document-content table { border-collapse: collapse; width: 100%; margin: 2em 0; font-family: 'Inter', sans-serif; font-size: 0.95rem; }
+            .document-content th, .document-content td { border: 1px solid #d1d5db; padding: 1em; text-align: left; }
+            .document-content th { background-color: #f9fafb; font-weight: 600; color: #374151; }
+            .document-content blockquote { 
+              margin: 2em 0; 
+              padding: 1em 1.5em; 
+              border-left: 4px solid #9ca3af; 
+              background-color: #f9fafb;
+              font-style: italic;
+            }
+            .document-content a { color: #2563eb; text-decoration: none; }
+            .document-content a:hover { text-decoration: underline; }
+            .document-content hr { margin: 3em 0; border: none; border-top: 1px solid #e5e7eb; }
           `}</style>
           <div
-            className="html-content"
+            className="document-content"
             dangerouslySetInnerHTML={{ __html: sanitizedContent }}
           ></div>
         </div>
