@@ -72,7 +72,7 @@ export function Router() {
             <Route index element={<Navigate to="visao-geral" replace />} />
             <Route path="visao-geral" element={<AdminOverviewPage />} />
             <Route path="anexos" element={<Attachments />} />
-            <Route path="chat" element={<AdminChat />} />
+            <Route path="chat/:conversation_id?" element={<AdminChat />} />
             <Route path="review" element={<TRReview />} />
           </Route>
         </Route>

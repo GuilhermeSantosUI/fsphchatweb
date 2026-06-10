@@ -56,6 +56,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useStickToBottomContext } from 'use-stick-to-bottom';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const DEFAULT_CHAT_SUGGESTIONS = [
   'Preciso gerar um Termo de Referência para contratação de serviço de TI.',
@@ -137,6 +138,9 @@ function ChatAutoScroll({
 }
 
 export function AdminChat() {
+  const { conversation_id } = useParams();
+  const navigate = useNavigate();
+
   const [messages, setMessages] = useState<AdminChatMessage[]>([
     WELCOME_MESSAGE,
   ]);
@@ -145,6 +149,39 @@ export function AdminChat() {
   const [assistantLoadingMessage, setAssistantLoadingMessage] = useState(
     ASSISTANT_LOADING_MESSAGES[0],
   );
+
+  // Load conversation state on mount
+  useEffect(() => {
+    async function loadConversation() {
+      if (!conversation_id) return;
+      
+      try {
+        setIsLoading(true);
+        const state = await chatRoute.getConversationState(conversation_id);
+        
+        // Map backend messages to AdminChatMessage
+        // Note: adjust this logic based on your actual backend message structure
+        if (state.messages && Array.isArray(state.messages)) {
+          const loadedMessages: AdminChatMessage[] = state.messages.map((m: any) => ({
+            id: m.id || crypto.randomUUID(),
+            role: m.role || 'user',
+            parts: [{ type: 'text', text: m.text || m.html || m.content || '' }],
+            createdAt: m.createdAt ? new Date(m.createdAt) : new Date(),
+          }));
+          
+          if (loadedMessages.length > 0) {
+            setMessages(loadedMessages);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load conversation state', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    loadConversation();
+  }, [conversation_id]);
 
   const getRandomLoadingMessage = (current?: string) => {
     const options = ASSISTANT_LOADING_MESSAGES.filter(
@@ -215,17 +252,24 @@ export function AdminChat() {
       setIsLoading(true);
 
       try {
-        const response = await chatRoute.legacyChat({
-          question,
-          top_k: DEFAULT_TOP_K,
+        const response = await chatRoute.sendMessage({
+          question: question,
+          conversation_id: conversation_id,
         });
+
+        // Use returned conversation_id to update URL if needed
+        if (response.conversation_id && response.conversation_id !== conversation_id) {
+          navigate(`/admin/chat/${response.conversation_id}`, { replace: true });
+        }
+
         const assistantText =
           typeof response.html === 'string' && response.html.trim().length > 0
             ? response.html
-            : typeof response.answer === 'string' &&
-                response.answer.trim().length > 0
-              ? response.answer
+            : typeof response.text === 'string' &&
+                response.text.trim().length > 0
+              ? response.text
               : 'Não consegui gerar a resposta neste momento. Tente novamente com mais detalhes.';
+              
         setMessages((previous) => [
           ...previous,
           createMessage('assistant', assistantText),
@@ -379,10 +423,10 @@ export function AdminChat() {
             return (
               <ChatMessage key={message.id}>
                 <ChatMessageActions>
-                  <ChatMessageAction label="Copy">
+                  <ChatMessageAction label="Copiar">
                     <Copy className="size-4" />
                   </ChatMessageAction>
-                  <ChatMessageAction label="Like">
+                  <ChatMessageAction label="Gostei">
                     <ThumbsUp className="size-4" />
                   </ChatMessageAction>
                 </ChatMessageActions>
@@ -482,10 +526,10 @@ export function AdminChat() {
           {isLoading ? (
             <ChatMessage key="assistant-loading">
               <ChatMessageActions>
-                <ChatMessageAction label="Copy">
+                <ChatMessageAction label="Copiar">
                   <Copy className="size-4" />
                 </ChatMessageAction>
-                <ChatMessageAction label="Like">
+                <ChatMessageAction label="Gostei">
                   <ThumbsUp className="size-4" />
                 </ChatMessageAction>
               </ChatMessageActions>
