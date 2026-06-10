@@ -41,7 +41,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/views/components/ui/dropdown-menu';
-import { HtmlOrMarkdown } from '@/views/components/ui/html-or-markdown';
+import { MarkdownContent } from '@/views/components/ui/markdown-content';
 import { TextAnimate } from '@/views/components/ui/text-animate';
 import html2pdf from 'html2pdf.js';
 import {
@@ -165,7 +165,12 @@ export function AdminChat() {
           const loadedMessages: AdminChatMessage[] = state.messages.map((m: any) => ({
             id: m.id || crypto.randomUUID(),
             role: m.role || 'user',
-            parts: [{ type: 'text', text: m.text || m.html || m.content || '' }],
+            parts: [{ 
+              type: 'text', 
+              text: (m.type === 'error' && m.message) 
+                ? (m.message === 'error' ? `DEBUG HISTORY: \n\`\`\`json\n${JSON.stringify(m, null, 2)}\n\`\`\`` : m.message) 
+                : (m.html && m.html !== 'error' ? m.html : (m.text && m.text !== 'error' ? m.text : m.content || m.message || `DEBUG HISTORY UNKNOWN: \n\`\`\`json\n${JSON.stringify(m, null, 2)}\n\`\`\``)) 
+            }],
             createdAt: m.createdAt ? new Date(m.createdAt) : new Date(),
           }));
           
@@ -262,24 +267,30 @@ export function AdminChat() {
           navigate(`/admin/chat/${response.conversation_id}`, { replace: true });
         }
 
-        const assistantText =
-          typeof response.html === 'string' && response.html.trim().length > 0
-            ? response.html
-            : typeof response.text === 'string' &&
-                response.text.trim().length > 0
-              ? response.text
-              : 'Não consegui gerar a resposta neste momento. Tente novamente com mais detalhes.';
+        let assistantText = '';
+        
+        if (response.type === 'error' && response.message) {
+          assistantText = response.message === 'error' ? `DEBUG API RESPONSE: \n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\`` : String(response.message);
+        } else if (typeof response.html === 'string' && response.html.trim().length > 0 && response.html.trim() !== 'error') {
+          assistantText = response.html;
+        } else if (typeof response.text === 'string' && response.text.trim().length > 0 && response.text.trim() !== 'error') {
+          assistantText = response.text;
+        } else if (response.message) {
+          assistantText = response.message === 'error' ? `DEBUG API RESPONSE: \n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\`` : String(response.message);
+        } else {
+          assistantText = `DEBUG UNKNOWN PAYLOAD: \n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\``;
+        }
               
         setMessages((previous) => [
           ...previous,
           createMessage('assistant', assistantText),
         ]);
-      } catch {
+      } catch (err: any) {
         setMessages((previous) => [
           ...previous,
           createMessage(
             'assistant',
-            'Ocorreu um erro ao consultar a API de geração de TR. Verifique a configuração de `VITE_API_BASE_URL` e tente novamente.',
+            `Ocorreu um erro ao consultar a API. Detalhes: ${err?.message}\n\nDEBUG API ERROR: \n\`\`\`json\n${JSON.stringify(err?.response?.data || err, null, 2)}\n\`\`\``,
           ),
         ]);
       } finally {
@@ -510,7 +521,7 @@ export function AdminChat() {
                                 </DropdownMenu>
                               </div>
                             ) : null}
-                            <HtmlOrMarkdown content={part.text} />
+                            <MarkdownContent content={part.text} />
                           </div>
                         );
                       }
