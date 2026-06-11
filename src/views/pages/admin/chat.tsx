@@ -53,8 +53,10 @@ import {
   FileText,
   FileType2,
   ThumbsUp,
+  X,
+  File as FileIcon,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useStickToBottomContext } from 'use-stick-to-bottom';
 import { useParams, useNavigate } from 'react-router-dom';
 
@@ -149,6 +151,55 @@ export function AdminChat() {
   const [assistantLoadingMessage, setAssistantLoadingMessage] = useState(
     ASSISTANT_LOADING_MESSAGES[0],
   );
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    // Only set dragging to false if we are leaving the main container
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsDragging(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files);
+    const validExtensions = ['.pdf', '.txt', '.docx'];
+    
+    const validFiles = files.filter(file => {
+      const extension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+      return validExtensions.includes(extension);
+    });
+
+    if (validFiles.length > 0) {
+      setAttachments(prev => [...prev, ...validFiles]);
+    } else {
+      // Ignore invalid files
+    }
+  }, []);
+
+  const removeAttachment = (indexToRemove: number) => {
+    setAttachments(prev => prev.filter((_, index) => index !== indexToRemove));
+  };
 
   // Load conversation state on mount
   useEffect(() => {
@@ -247,19 +298,34 @@ export function AdminChat() {
     onSubmit: async (parsedValue) => {
       const question = parsedValue.content.trim();
 
-      if (!question || isLoading) {
+      if ((!question && attachments.length === 0) || isLoading) {
         return;
       }
 
       setSuggestionText(null);
+      
+      const currentAttachments = [...attachments];
+      setAttachments([]);
 
-      setMessages((previous) => [...previous, createMessage('user', question)]);
+      setMessages((previous) => [...previous, createMessage('user', question || 'Enviei anexos para o contexto.')]);
       setIsLoading(true);
 
       try {
+        const context_files = await Promise.all(
+          currentAttachments.map(async (file) => {
+            const base64 = await fileToBase64(file);
+            return {
+              filename: file.name,
+              content: base64,
+              type: file.type || 'application/octet-stream',
+            };
+          })
+        );
+
         const response = await chatRoute.sendMessage({
           question: question,
           conversation_id: conversation_id,
+          context_files: context_files.length > 0 ? context_files : undefined,
         });
 
         // Use returned conversation_id to update URL if needed
@@ -415,7 +481,21 @@ export function AdminChat() {
   };
 
   return (
-    <div className="flex-1 min-h-0 h-full flex flex-col overflow-hidden">
+    <div 
+      className="flex-1 min-h-0 h-full flex flex-col overflow-hidden relative"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {isDragging && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm border-2 border-dashed border-primary m-4 rounded-xl pointer-events-none">
+          <div className="flex flex-col items-center gap-2 text-primary bg-background/90 p-8 rounded-2xl shadow-lg border">
+            <FileIcon className="size-16 animate-bounce" />
+            <p className="text-xl font-semibold">Solte os arquivos aqui para anexar</p>
+            <p className="text-sm opacity-70">Apenas arquivos .pdf, .txt ou .docx</p>
+          </div>
+        </div>
+      )}
       <header className="sticky top-0 z-20 border-b bg-background/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-3">
           <h1 className="text-sm font-medium">Admin Chat</h1>
@@ -575,6 +655,22 @@ export function AdminChat() {
       </ChatMessageArea>
 
       <div className="sticky bottom-0 z-20 px-4 pb-4">
+        {attachments.length > 0 && (
+          <div className="mx-auto w-full max-w-3xl flex flex-wrap gap-2 mb-2 p-2 bg-background border rounded-lg shadow-sm">
+            {attachments.map((file, idx) => (
+              <div key={idx} className="flex items-center gap-2 px-3 py-1.5 bg-accent text-accent-foreground rounded-md text-sm group">
+                <FileIcon className="size-4 opacity-70" />
+                <span className="truncate max-w-[200px]" title={file.name}>{file.name}</span>
+                <button 
+                  onClick={() => removeAttachment(idx)}
+                  className="opacity-50 hover:opacity-100 hover:text-destructive transition-colors ml-1"
+                >
+                  <X className="size-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
         <ChatInput
           onSubmit={handleSubmit}
           isStreaming={isLoading}

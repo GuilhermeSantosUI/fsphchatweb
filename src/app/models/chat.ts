@@ -9,9 +9,16 @@ export type LegacyChatResponse = {
   [key: string]: unknown;
 };
 
+export type ContextFile = {
+  filename: string;
+  content: string; // Base64
+  type: string; // Mime type
+};
+
 export type ChatRequest = {
   // Add other required fields if any. The spec says "Aceita qualquer mensagem"
   question?: string;
+  context_files?: ContextFile[];
   // Let the user pass any other data
   [key: string]: unknown;
 };

@@ -16,7 +16,7 @@ import {
   ClockIcon,
   FileIcon,
   FileTextIcon,
-  LayoutKanbanIcon,
+  LayoutIcon,
   MessageSquareIcon,
   PaperclipIcon,
   SearchIcon,
@@ -415,7 +415,7 @@ export function TRReview() {
             />
           </div>
           <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground bg-muted/40 px-3 py-1.5 rounded-lg border">
-            <LayoutKanbanIcon className="size-4" />
+            <LayoutIcon className="size-4" />
             <span>Fluxo de aprovação em esteira</span>
           </div>
         </div>
@@ -489,7 +489,7 @@ export function TRReview() {
           setIsRejecting(false);
         }
       }}>
-        <SheetContent side="right" className="w-full sm:max-w-[600px] overflow-y-auto p-0 sm:max-w-2xl">
+        <SheetContent side="right" className="w-full overflow-y-auto max-w-[600px] p-0">
           {selectedDoc && (
             <div className="flex flex-col h-full bg-background">
 
