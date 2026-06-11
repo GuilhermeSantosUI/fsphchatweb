@@ -11,12 +11,24 @@ import {
   CardTitle,
 } from '@/views/components/ui/card';
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/views/components/ui/alert-dialog';
+import {
   DatabaseZapIcon,
   FileIcon,
   FileSpreadsheetIcon,
   FileTextIcon,
   FolderSyncIcon,
   Layers3Icon,
+  Loader2Icon,
   PencilLineIcon,
   Trash2Icon,
   UploadCloudIcon,
@@ -29,7 +41,7 @@ type UploadedFile = {
   size: number;
   uploadedAt: Date;
   file?: File;
-  status: 'pending' | 'uploading' | 'uploaded' | 'indexed' | 'error';
+  status: 'pending' | 'uploading' | 'uploaded' | 'indexed' | 'error' | 'deleting';
   errorMessage?: string;
 };
 
@@ -199,20 +211,22 @@ export function Attachments() {
   };
 
   const removeFile = async (file: UploadedFile) => {
-    if (
-      window.confirm(`Tem certeza que deseja excluir o documento ${file.name}?`)
-    ) {
-      if (file.status === 'uploaded' || file.status === 'indexed') {
-        try {
-          setSyncError(null);
-          await adminRoute.removeDocument(file.name);
-          await fetchDocuments();
-        } catch (error) {
-          setSyncError(getErrorMessage(error));
-        }
-      } else {
+    if (file.status === 'uploaded' || file.status === 'indexed') {
+      try {
+        setSyncError(null);
+        setFiles((prev) =>
+          prev.map((f) =>
+            f.id === file.id ? { ...f, status: 'deleting' as const } : f,
+          ),
+        );
+        await adminRoute.removeDocument(file.name);
         setFiles((prev) => prev.filter((f) => f.id !== file.id));
+      } catch (error) {
+        setSyncError(getErrorMessage(error));
+        await fetchDocuments();
       }
+    } else {
+      setFiles((prev) => prev.filter((f) => f.id !== file.id));
     }
   };
 
@@ -316,13 +330,14 @@ export function Attachments() {
     if (status === 'uploading') return 'Enviando';
     if (status === 'uploaded') return 'Enviado';
     if (status === 'indexed') return 'Indexado';
+    if (status === 'deleting') return 'Excluindo';
     return 'Falha';
   };
 
   const getStatusTone = (status: UploadedFile['status']) => {
     if (status === 'indexed') return 'success';
     if (status === 'error') return 'destructive';
-    if (status === 'uploading' || status === 'pending') return 'warning';
+    if (status === 'uploading' || status === 'pending' || status === 'deleting') return 'warning';
     return 'default';
   };
 
@@ -653,15 +668,40 @@ export function Attachments() {
                 >
                   {getStatusLabel(file.status)}
                 </Badge>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="size-7 text-muted-foreground hover:text-destructive"
-                  onClick={() => removeFile(file)}
-                  disabled={file.status === 'uploading'}
-                >
-                  <Trash2Icon className="size-4" />
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="size-7 text-muted-foreground hover:text-destructive"
+                      disabled={file.status === 'uploading' || file.status === 'deleting'}
+                    >
+                      {file.status === 'deleting' ? (
+                        <Loader2Icon className="size-4 animate-spin" />
+                      ) : (
+                        <Trash2Icon className="size-4" />
+                      )}
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Excluir documento</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Tem certeza que deseja excluir o documento{' '}
+                        <span className="font-medium text-foreground">
+                          {file.name}
+                        </span>
+                        ?
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => removeFile(file)}>
+                        Excluir
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             ))}
           </CardContent>

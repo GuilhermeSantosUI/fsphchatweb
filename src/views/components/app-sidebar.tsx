@@ -65,7 +65,7 @@ const data = {
       label: 'Esteira de Análise',
       items: [
         {
-          title: 'Visualização de Documentos',
+          title: "Revisão de TR's",
           url: '/admin/review',
           icon: <Scan size={18} />,
           exact: true,
