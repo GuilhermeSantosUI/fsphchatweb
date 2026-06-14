@@ -28,7 +28,7 @@ export function LoginForm({ className }: LoginFormProps) {
 
     try {
       await login({ email, password });
-      navigate('/admin/visao-geral', { replace: true });
+      navigate('/admin/chat', { replace: true });
     } catch {
       setErrorMessage(
         'Nao foi possivel autenticar. Confira as credenciais e tente novamente.',

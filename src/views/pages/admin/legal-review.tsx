@@ -47,7 +47,7 @@ export function LegalReviewPage() {
   return (
     <AdminPageShell
       breadcrumbs={[
-        { label: 'Administrador', href: '/admin/visao-geral' },
+        { label: 'Administrador', href: '/admin/chat' },
         { label: 'Esteira de analise', href: '/admin/analises' },
         { label: 'Juridico' },
       ]}

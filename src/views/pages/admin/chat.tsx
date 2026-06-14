@@ -67,7 +67,6 @@ const DEFAULT_CHAT_SUGGESTIONS = [
   'Me ajude a melhorar a justificativa técnica e os critérios de pagamento.',
 ];
 
-const DEFAULT_TOP_K = 6;
 
 const ASSISTANT_LOADING_MESSAGES = [
   'Analisando o contexto documental da FSPH...',
@@ -154,14 +153,7 @@ export function AdminChat() {
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = (error) => reject(error);
-    });
-  };
+
 
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -208,7 +200,7 @@ export function AdminChat() {
       
       try {
         setIsLoading(true);
-        const state = await chatRoute.getConversationState(conversation_id);
+        const state = await chatRoute.getChatById(conversation_id);
         
         // Map backend messages to AdminChatMessage
         // Note: adjust this logic based on your actual backend message structure
@@ -311,46 +303,49 @@ export function AdminChat() {
       setIsLoading(true);
 
       try {
-        const context_files = await Promise.all(
-          currentAttachments.map(async (file) => {
-            const base64 = await fileToBase64(file);
-            return {
-              filename: file.name,
-              content: base64,
-              type: file.type || 'application/octet-stream',
-            };
-          })
-        );
-
         const response = await chatRoute.sendMessage({
           question: question,
           conversation_id: conversation_id,
-          context_files: context_files.length > 0 ? context_files : undefined,
         });
 
-        // Use returned conversation_id to update URL if needed
-        if (response.conversation_id && response.conversation_id !== conversation_id) {
-          navigate(`/admin/chat/${response.conversation_id}`, { replace: true });
+        const newConversationId = response.conversation_id || conversation_id;
+        
+        if (newConversationId && currentAttachments.length > 0) {
+          for (const file of currentAttachments) {
+            await chatRoute.uploadContext(newConversationId, file);
+          }
+        }
+
+        if (newConversationId && newConversationId !== conversation_id) {
+          navigate(`/admin/chat/${newConversationId}`, { replace: true });
         }
 
         let assistantText = '';
         
-        if (response.type === 'error' && response.message) {
-          assistantText = response.message === 'error' ? `DEBUG API RESPONSE: \n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\`` : String(response.message);
-        } else if (typeof response.html === 'string' && response.html.trim().length > 0 && response.html.trim() !== 'error') {
-          assistantText = response.html;
-        } else if (typeof response.text === 'string' && response.text.trim().length > 0 && response.text.trim() !== 'error') {
-          assistantText = response.text;
-        } else if (response.message) {
-          assistantText = response.message === 'error' ? `DEBUG API RESPONSE: \n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\`` : String(response.message);
-        } else {
-          assistantText = `DEBUG UNKNOWN PAYLOAD: \n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\``;
+        switch (response.type) {
+          case 'error':
+            assistantText = response.message === 'error' ? `DEBUG API RESPONSE: \n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\`` : String(response.message);
+            break;
+          case 'tr':
+          case 'tr_update':
+            assistantText = response.html && response.html.trim() !== 'error' ? response.html : '';
+            break;
+          case 'tr_explain':
+          case 'conversational':
+          case 'document_query':
+            assistantText = response.message === 'error' ? `DEBUG API RESPONSE: \n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\`` : String(response.message);
+            break;
+          default:
+            assistantText = `DEBUG UNKNOWN PAYLOAD: \n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\``;
+            break;
         }
               
         setMessages((previous) => [
           ...previous,
           createMessage('assistant', assistantText),
         ]);
+        
+        window.dispatchEvent(new CustomEvent('chat-updated'));
       } catch (err: any) {
         setMessages((previous) => [
           ...previous,
@@ -463,9 +458,9 @@ export function AdminChat() {
         const opt = {
           margin: 15,
           filename: `${filename}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
+          image: { type: 'jpeg' as const, quality: 0.98 },
           html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const },
         };
 
         // O html2pdf cuida do download automaticamente

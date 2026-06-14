@@ -1,15 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { adminRoute } from '@/app/services/admin';
 import { AdminPageShell } from '@/views/components/admin/admin-page-shell';
-import { Badge } from '@/views/components/ui/badge';
-import { Button } from '@/views/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/views/components/ui/card';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,6 +12,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/views/components/ui/alert-dialog';
+import { Badge } from '@/views/components/ui/badge';
+import { Button } from '@/views/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/views/components/ui/card';
 import {
   DatabaseZapIcon,
   FileIcon,
@@ -71,6 +71,7 @@ export function Attachments() {
   const [files, setFiles] = useState<UploadedFile[]>([]);
   const [dragging, setDragging] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isIndexing, setIsIndexing] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>('upload');
 
@@ -110,10 +111,10 @@ export function Attachments() {
           typeof doc === 'string'
             ? doc
             : doc.nome ||
-              doc.nome_arquivo ||
-              doc.name ||
-              doc.filename ||
-              `documento-${index}`;
+            doc.nome_arquivo ||
+            doc.name ||
+            doc.filename ||
+            `documento-${index}`;
         const size =
           typeof doc === 'object' && typeof doc.size === 'number'
             ? doc.size
@@ -136,6 +137,20 @@ export function Attachments() {
   useEffect(() => {
     fetchDocuments();
   }, []);
+
+  const handleReindex = async () => {
+    setIsIndexing(true);
+    setSyncError(null);
+    try {
+      await adminRoute.indexDocuments(true);
+      await fetchDocuments();
+      setEditorSuccess('Base reindexada com sucesso.');
+    } catch (error) {
+      setSyncError(getErrorMessage(error));
+    } finally {
+      setIsIndexing(false);
+    }
+  };
 
   const getErrorMessage = (error: unknown) => {
     if (
@@ -182,10 +197,10 @@ export function Attachments() {
           prev.map((current) =>
             current.id === file.id
               ? {
-                  ...current,
-                  status: 'error',
-                  errorMessage: getErrorMessage(error),
-                }
+                ...current,
+                status: 'error',
+                errorMessage: getErrorMessage(error),
+              }
               : current,
           ),
         );
@@ -350,22 +365,30 @@ export function Attachments() {
   return (
     <AdminPageShell
       breadcrumbs={[
-        { label: 'Administrador', href: '/admin/visao-geral' },
+        { label: 'Administrador', href: '/admin/chat' },
         { label: 'Base documental' },
       ]}
       title="Base documental e anexos"
       description="Gerencie os arquivos que alimentam a base vetorial da IA para geracao de TR com contexto institucional confiavel e rastreavel."
       badge="RAG habilitado"
       actions={
-        <>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={handleReindex}
+            disabled={isIndexing}
+          >
+            <DatabaseZapIcon className="size-4 mr-2" />
+            {isIndexing ? 'Reindexando...' : 'Reindexar Base'}
+          </Button>
           <Button
             onClick={() => inputRef.current?.click()}
             disabled={isUploading}
           >
-            <UploadCloudIcon className="size-4" />
+            <UploadCloudIcon className="size-4 mr-2" />
             {isUploading ? 'Enviando...' : 'Enviar documentos'}
           </Button>
-        </>
+        </div>
       }
       stats={[
         {
@@ -399,22 +422,20 @@ export function Attachments() {
       <div className="mb-6 flex gap-1 rounded-xl border bg-muted/40 p-1 w-fit">
         <button
           onClick={() => setActiveTab('upload')}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === 'upload'
+          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'upload'
               ? 'bg-background shadow-sm text-foreground'
               : 'text-muted-foreground hover:text-foreground'
-          }`}
+            }`}
         >
           <UploadCloudIcon className="size-4" />
           Enviar arquivo
         </button>
         <button
           onClick={() => setActiveTab('editor')}
-          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === 'editor'
+          className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${activeTab === 'editor'
               ? 'bg-background shadow-sm text-foreground'
               : 'text-muted-foreground hover:text-foreground'
-          }`}
+            }`}
         >
           <PencilLineIcon className="size-4" />
           Escrever texto
@@ -445,11 +466,10 @@ export function Attachments() {
                   addFiles(event.dataTransfer.files);
                 }}
                 onClick={() => inputRef.current?.click()}
-                className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-10 transition-colors ${
-                  dragging
+                className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed p-10 transition-colors ${dragging
                     ? 'border-primary bg-primary/5'
                     : 'border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/30'
-                }`}
+                  }`}
               >
                 <UploadCloudIcon
                   className={`size-10 ${dragging ? 'text-primary' : 'text-muted-foreground'}`}
@@ -523,14 +543,14 @@ export function Attachments() {
                   <code className="font-mono">
                     {editorTitle.trim()
                       ? editorTitle
-                          .trim()
-                          .normalize('NFD')
-                          .replace(/[\u0300-\u036f]/g, '')
-                          .replace(/[^a-zA-Z0-9\s-_]/g, '')
-                          .trim()
-                          .replace(/\s+/g, '_')
-                          .toLowerCase()
-                          .slice(0, 40) + '.txt'
+                        .trim()
+                        .normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, '')
+                        .replace(/[^a-zA-Z0-9\s-_]/g, '')
+                        .trim()
+                        .replace(/\s+/g, '_')
+                        .toLowerCase()
+                        .slice(0, 40) + '.txt'
                       : 'nome_do_documento.txt'}
                   </code>
                   ).

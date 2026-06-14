@@ -20,7 +20,7 @@ export function AdminOverviewPage() {
   return (
     <AdminPageShell
       breadcrumbs={[
-        { label: 'Administrador', href: '/admin/visao-geral' },
+        { label: 'Administrador', href: '/admin/chat' },
         { label: 'Painel executivo' },
       ]}
       title="Painel executivo do TR"

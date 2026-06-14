@@ -175,22 +175,6 @@ function statusConfig(status: ReviewStatus) {
   };
 }
 
-function buildSystemPrompt(doc: TRDocument): string {
-  return `Você é um especialista em licitações públicas e redação de Termos de Referência (TR).
-Seu papel é ajudar a corrigir e aprimorar o TR abaixo, que foi reprovado por um gestor do sistema.
-
-## TR ORIGINAL
-Título: ${doc.title}
-Categoria: ${doc.category}
-
-Conteúdo:
-${doc.fullContent}
-
-## MOTIVO DA REPROVAÇÃO
-${doc.rejectionReason}
-
-Responda de forma direta e ofereça trechos corrigidos prontos para substituir no documento.`;
-}
 
 // ─── Inline Chat Component ───────────────────────────────────────────────────
 
@@ -292,7 +276,7 @@ function CorrectionChat({ doc }: { doc: TRDocument }) {
 // ─── Compact Kanban Card ──────────────────────────────────────────────────────
 
 function TRKanbanCard({ doc, onClick }: { doc: TRDocument; onClick: () => void }) {
-  const cfg = statusConfig(doc.status);
+
 
   return (
     <Card
@@ -396,7 +380,7 @@ export function TRReview() {
     <>
       <AdminPageShell
         breadcrumbs={[
-          { label: 'Administrador', href: '/admin/visao-geral' },
+          { label: 'Administrador', href: '/admin/chat' },
           { label: 'Esteira de Revisão' },
         ]}
         title="Esteira de Revisão de TRs"

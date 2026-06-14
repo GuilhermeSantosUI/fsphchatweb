@@ -2,7 +2,7 @@ import { useAuth } from '@/app/context/auth';
 import { AdminChat } from '@/views/pages/admin/chat';
 import { Attachments } from '@/views/pages/admin/dashboard';
 import { AdminLayout } from '@/views/pages/admin/layout';
-import { AdminOverviewPage } from '@/views/pages/admin/overview';
+
 import { TRReview } from '@/views/pages/admin/review';
 import { LoginPage } from '@/views/pages/auth/login';
 import {
@@ -28,7 +28,7 @@ function RootRedirect() {
     return <RouteLoadingScreen />;
   }
 
-  return <Navigate to={session ? '/admin/visao-geral' : '/login'} replace />;
+  return <Navigate to={session ? '/admin/chat' : '/login'} replace />;
 }
 
 function RequireAuth() {
@@ -53,7 +53,7 @@ function GuestOnly() {
   }
 
   if (session) {
-    return <Navigate to="/admin/visao-geral" replace />;
+    return <Navigate to="/admin/chat" replace />;
   }
 
   return <Outlet />;
@@ -67,12 +67,11 @@ export function Router() {
         <Route element={<GuestOnly />}>
           <Route path="/login" element={<LoginPage />} />
         </Route>
-        <Route>
+        <Route element={<RequireAuth />}>
           <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<Navigate to="visao-geral" replace />} />
-            <Route path="visao-geral" element={<AdminOverviewPage />} />
-            <Route path="anexos" element={<Attachments />} />
+            <Route index element={<Navigate to="chat" replace />} />
             <Route path="chat/:conversation_id?" element={<AdminChat />} />
+            <Route path="anexos" element={<Attachments />} />
             <Route path="review" element={<TRReview />} />
           </Route>
         </Route>

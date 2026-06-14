@@ -14,18 +14,50 @@ import {
   SidebarHeader,
   SidebarRail,
 } from '@/views/components/ui/sidebar';
-import { Building2, Folder, MessageCircle, Scan } from 'lucide-react';
+import { Folder, MessageCircle, Scan } from 'lucide-react';
+import { chatRoute } from '@/app/services/chat';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/views/components/ui/alert-dialog';
 
-// Simulando uma requisição de histórico (loading de 2 segundos)
 function useRecentChats() {
+  const [chats, setChats] = React.useState<{ title: string; url: string; conversation_id: string }[]>([]);
   const [loading, setLoading] = React.useState(true);
 
-  React.useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 2000);
-    return () => clearTimeout(timer);
+  const fetchChats = React.useCallback(async () => {
+    try {
+      const response = await chatRoute.getChats();
+      const mapped = response.chats.map((chat) => ({
+        title: chat.titulo || 'Chat sem título',
+        url: `/admin/chat/${chat.conversation_id}`,
+        conversation_id: chat.conversation_id,
+      }));
+      setChats(mapped);
+    } catch (error) {
+      console.error('Erro ao carregar chats', error);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  return { loading };
+  React.useEffect(() => {
+    fetchChats();
+  }, [fetchChats]);
+
+  React.useEffect(() => {
+    const handleChatUpdate = () => fetchChats();
+    window.addEventListener('chat-updated', handleChatUpdate);
+    return () => window.removeEventListener('chat-updated', handleChatUpdate);
+  }, [fetchChats]);
+
+  return { chats, loading, fetchChats };
 }
 
 const data = {
@@ -34,14 +66,6 @@ const data = {
     email: 'gestao.tr@fsph.gov.br',
     avatar: '',
   },
-
-  teams: [
-    {
-      name: 'FSPH',
-      logo: <Building2 size={18} />,
-      plan: 'Gestão de TR institucional',
-    },
-  ],
 
   staticSections: [
     {
@@ -73,49 +97,6 @@ const data = {
       ],
     },
   ],
-
-  recentChats: [
-    {
-      title: 'Parecer Jurídico 154',
-      url: '/admin/chat/6',
-    },
-    {
-      title: 'TR Transporte Escolar',
-      url: '/admin/chat/7',
-    },
-    {
-      title: 'TR Medicamentos Componente Especializado',
-      url: '/admin/chat/8',
-    },
-    {
-      title: 'Reforma UBS Centro Hidrográfico',
-      url: '/admin/chat/9',
-    },
-    {
-      title: 'Insumos Laboratoriais Huse',
-      url: '/admin/chat/10',
-    },
-    {
-      title: 'Locação de Ambulâncias Tipo D',
-      url: '/admin/chat/11',
-    },
-    {
-      title: 'Aquisição de Computadores Core i7',
-      url: '/admin/chat/12',
-    },
-    {
-      title: 'Serviço de Nuvem Privada Gov',
-      url: '/admin/chat/13',
-    },
-    {
-      title: 'Recarga de Oxigênio Hospitalar',
-      url: '/admin/chat/14',
-    },
-    {
-      title: 'Licenciamento de Software Antivírus',
-      url: '/admin/chat/15',
-    },
-  ],
 };
 
 function RecentChatsSkeleton() {
@@ -139,7 +120,13 @@ function RecentChatsSkeleton() {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { session, logout } = useAuth();
   const navigate = useNavigate();
-  const { loading: loadingChats } = useRecentChats();
+  const { chats, loading: loadingChats, fetchChats } = useRecentChats();
+
+  const [deleteDialog, setDeleteDialog] = React.useState<{ open: boolean; id: string | null; title: string }>({
+    open: false,
+    id: null,
+    title: '',
+  });
 
   const user = session
     ? {
@@ -148,6 +135,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         avatar: '',
       }
     : data.fallbackUser;
+
+  const handleRename = async (id: string, currentTitle: string) => {
+    const newTitle = window.prompt('Digite o novo título para o chat:', currentTitle);
+    if (newTitle && newTitle.trim() !== '' && newTitle !== currentTitle) {
+      try {
+        await chatRoute.renameChat(id, { titulo: newTitle });
+        await fetchChats();
+      } catch (error) {
+        console.error('Falha ao renomear', error);
+      }
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (deleteDialog.id) {
+      try {
+        await chatRoute.deleteChat(deleteDialog.id);
+        setDeleteDialog({ open: false, id: null, title: '' });
+        await fetchChats();
+        // Se excluiu o chat aberto, redireciona para um novo
+        if (window.location.pathname.includes(deleteDialog.id)) {
+          navigate('/admin/chat', { replace: true });
+        }
+      } catch (error) {
+        console.error('Falha ao excluir', error);
+      }
+    }
+  };
 
   return (
     <>
@@ -176,9 +191,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               sections={[
                 {
                   label: 'Últimos Chats',
-                  items: data.recentChats,
+                  items: chats,
                 },
               ]}
+              onRename={handleRename}
+              onDelete={(id, title) => setDeleteDialog({ open: true, id, title })}
             />
           )}
         </SidebarContent>
@@ -195,6 +212,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
         <SidebarRail />
       </Sidebar>
+
+      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => !open && setDeleteDialog({ open: false, id: null, title: '' })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir chat</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o chat "<strong>{deleteDialog.title}</strong>"? 
+              Esta ação removerá todo o histórico e contextos anexados a ele, não podendo ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction className="bg-destructive hover:bg-destructive/90 text-destructive-foreground" onClick={confirmDelete}>
+              Sim, excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

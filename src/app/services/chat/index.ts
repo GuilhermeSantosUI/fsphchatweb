@@ -1,8 +1,19 @@
 import { legacyChat } from './legacy-chat';
-import { sendMessage, getConversationState } from './chat';
+import { 
+  sendMessage, 
+  getChats, 
+  getChatById, 
+  renameChat, 
+  deleteChat, 
+  uploadContext 
+} from './chat';
 
 export const chatRoute = {
   legacyChat,
   sendMessage,
-  getConversationState,
+  getChats,
+  getChatById,
+  renameChat,
+  deleteChat,
+  uploadContext,
 };
