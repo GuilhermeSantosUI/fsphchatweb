@@ -1,3 +1,4 @@
+import type { DocumentState } from '@/app/models/chat';
 import { chatRoute } from '@/app/services/chat';
 import { cn } from '@/app/utils';
 import AnimatedShinyText from '@/views/components/ui/animated-shiny-text';
@@ -152,6 +153,8 @@ export function AdminChat() {
   );
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [currentDocument, setCurrentDocument] = useState<DocumentState | null>(null);
+  const [isDocumentPanelOpen, setIsDocumentPanelOpen] = useState(false);
 
 
 
@@ -195,12 +198,22 @@ export function AdminChat() {
 
   // Load conversation state on mount
   useEffect(() => {
+    // Reset document state when conversation changes
+    setCurrentDocument(null);
+    setIsDocumentPanelOpen(false);
+
     async function loadConversation() {
       if (!conversation_id) return;
 
       try {
         setIsLoading(true);
         const state = await chatRoute.getChatById(conversation_id);
+
+        // Load current_document if it exists
+        if (state.current_document) {
+          setCurrentDocument(state.current_document);
+          setIsDocumentPanelOpen(true);
+        }
 
         // Map backend messages to AdminChatMessage
         // Note: adjust this logic based on your actual backend message structure
@@ -327,9 +340,25 @@ export function AdminChat() {
             assistantText = response.message === 'error' ? `Ocorreu um erro ao processar a resposta da API.` : String(response.message);
             break;
           case 'tr':
-          case 'tr_update':
-            assistantText = response.html && response.html.trim() !== 'error' ? response.html : '';
+          case 'tr_update': {
+            const docHtml = response.html && response.html.trim() !== 'error' ? response.html : '';
+            // Update the document panel with the new TR
+            if (docHtml) {
+              const newDoc: DocumentState = {
+                type: 'tr',
+                document_title: ('document_title' in response ? response.document_title : undefined) || 'TERMO DE REFERÊNCIA',
+                sections: response.sections || [],
+                table_columns: ('table_columns' in response ? response.table_columns : undefined) || [],
+                html: docHtml,
+              };
+              setCurrentDocument(newDoc);
+              setIsDocumentPanelOpen(true);
+            }
+            assistantText = response.type === 'tr'
+              ? `O Termo de Referência foi gerado com sucesso. Você pode visualizá-lo e exportá-lo no painel à direita.`
+              : `O Termo de Referência foi atualizado com sucesso. As alterações já estão refletidas no painel de visualização.`;
             break;
+          }
           case 'tr_explain':
           case 'conversational':
           case 'document_query':
@@ -477,7 +506,7 @@ export function AdminChat() {
 
   return (
     <div
-      className="flex-1 min-h-0 h-full flex flex-col overflow-hidden relative"
+      className="flex-1 min-h-0 h-full flex overflow-hidden relative"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -491,9 +520,21 @@ export function AdminChat() {
           </div>
         </div>
       )}
+
+      {/* Chat Panel */}
+      <div className="flex flex-col min-h-0 h-full overflow-hidden" style={{ flex: isDocumentPanelOpen ? '0 0 42%' : '1 1 auto', minWidth: 0 }}>
       <header className="sticky top-0 z-20 border-b bg-background/50 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-3">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <h1 className="text-sm font-medium">Admin Chat</h1>
+          {currentDocument && (
+            <button
+              onClick={() => setIsDocumentPanelOpen(v => !v)}
+              className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md border bg-background hover:bg-accent transition-colors"
+            >
+              <FileText className="size-3.5" />
+              {isDocumentPanelOpen ? 'Ocultar TR' : 'Ver TR'}
+            </button>
+          )}
         </div>
       </header>
 
@@ -703,6 +744,74 @@ export function AdminChat() {
           utilizá-los.
         </p>
       </div>
+      </div>{/* end Chat Panel */}
+
+      {/* Document Preview Panel */}
+      {isDocumentPanelOpen && currentDocument && (
+        <div
+          className="flex flex-col border-l bg-background"
+          style={{ flex: '1 1 58%', minWidth: 0 }}
+        >
+          {/* Panel Header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b bg-background/80 backdrop-blur-sm sticky top-0 z-10">
+            <div className="flex items-center gap-2 min-w-0">
+              <FileText className="size-4 text-primary shrink-0" />
+              <span className="text-sm font-semibold truncate" title={currentDocument.document_title}>
+                {currentDocument.document_title || 'Termo de Referência'}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              {/* Export Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="font-medium">
+                    <Download className="size-4 mr-1.5" />
+                    Exportar
+                    <ChevronDown className="size-3.5 ml-1 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52">
+                  <DropdownMenuItem onClick={() => handleExport(currentDocument.html, 'pdf')}>
+                    <FileType2 className="size-4 mr-2 text-red-500" />
+                    Baixar PDF (.pdf)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport(currentDocument.html, 'docx')}>
+                    <FileArchive className="size-4 mr-2 text-blue-600" />
+                    Baixar Word (.docx)
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleExport(currentDocument.html, 'txt')}>
+                    <FileText className="size-4 mr-2 text-gray-500" />
+                    Baixar Texto (.txt)
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExport(currentDocument.html, 'html')}>
+                    <FileCode className="size-4 mr-2 text-blue-500" />
+                    Baixar HTML (.html)
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <button
+                onClick={() => setIsDocumentPanelOpen(false)}
+                className="p-1.5 rounded-md hover:bg-accent transition-colors text-muted-foreground hover:text-foreground"
+                title="Fechar painel"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Document iframe */}
+          <div className="flex-1 overflow-hidden">
+            <iframe
+              key={currentDocument.html.length}
+              srcDoc={currentDocument.html}
+              title={currentDocument.document_title || 'Documento'}
+              className="w-full h-full border-0"
+              sandbox="allow-same-origin"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
