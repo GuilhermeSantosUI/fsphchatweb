@@ -115,10 +115,18 @@ export function Attachments() {
             doc.name ||
             doc.filename ||
             `documento-${index}`;
-        const size =
-          typeof doc === 'object' && typeof doc.size === 'number'
-            ? doc.size
-            : 0;
+        let size = 0;
+        if (typeof doc === 'object' && doc !== null) {
+          const rawSize = doc.size ?? doc.tamanho ?? doc.fileSize ?? doc.tamanho_arquivo;
+          if (typeof rawSize === 'number') {
+            size = rawSize;
+          } else if (typeof rawSize === 'string') {
+            const parsed = Number(rawSize);
+            if (!isNaN(parsed)) {
+              size = parsed;
+            }
+          }
+        }
         return {
           id: name,
           name,
