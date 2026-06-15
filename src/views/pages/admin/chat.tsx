@@ -46,7 +46,8 @@ import {
 } from '@/views/components/ui/dropdown-menu';
 import { MarkdownContent } from '@/views/components/ui/markdown-content';
 import { TextAnimate } from '@/views/components/ui/text-animate';
-import html2pdf from 'html2pdf.js';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import {
   ChevronDown,
   CheckCircle2,
@@ -499,27 +500,64 @@ export function AdminChat() {
       }
 
       case 'pdf': {
-        // Exportação PDF: Usamos o html2pdf.js
-        // Criamos um elemento temporário com a mesma estilização do seu componente
-        // para que o PDF saia com a mesma cara da tela.
-        const tempContainer = document.createElement('div');
-        tempContainer.innerHTML = content;
-        tempContainer.style.fontFamily = "'Georgia', 'Times New Roman', serif";
-        tempContainer.style.fontSize = '12pt';
-        tempContainer.style.lineHeight = '1.5';
-        tempContainer.style.padding = '20px';
-        tempContainer.style.color = '#000';
+        // Renderiza o HTML num div fora da tela (sem iframe) e captura com html2canvas
+        const A4_WIDTH_MM = 210;
+        const A4_HEIGHT_MM = 297;
+        const PX_PER_MM = 3.7795275591; // 96 dpi
+        const pageWidthPx = Math.floor(A4_WIDTH_MM * PX_PER_MM);
 
-        const opt = {
-          margin: 15,
-          filename: `${filename}.pdf`,
-          image: { type: 'jpeg' as const, quality: 0.98 },
-          html2canvas: { scale: 2, useCORS: true },
-          jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const },
-        };
+        const offscreen = document.createElement('div');
+        offscreen.innerHTML = content;
+        Object.assign(offscreen.style, {
+          position: 'absolute',
+          top: '-9999px',
+          left: '-9999px',
+          width: `${pageWidthPx}px`,
+          fontFamily: "'Georgia', 'Times New Roman', serif",
+          fontSize: '12pt',
+          lineHeight: '1.6',
+          padding: '40px',
+          color: '#000',
+          background: '#fff',
+          boxSizing: 'border-box',
+        });
+        document.body.appendChild(offscreen);
 
-        // O html2pdf cuida do download automaticamente
-        await html2pdf().set(opt).from(tempContainer).save();
+        try {
+          const canvas = await html2canvas(offscreen, {
+            scale: 2,
+            useCORS: true,
+            backgroundColor: '#ffffff',
+            width: pageWidthPx,
+          });
+
+          const imgData = canvas.toDataURL('image/jpeg', 0.95);
+          const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+
+          const pageHeightPx = Math.floor(A4_HEIGHT_MM * PX_PER_MM);
+          const totalPages = Math.ceil(canvas.height / (pageHeightPx * 2)); // *2 for scale:2
+
+          for (let page = 0; page < totalPages; page++) {
+            if (page > 0) doc.addPage();
+
+            // Clip da fatia desta página do canvas
+            const srcY = page * pageHeightPx * 2;
+            const srcH = Math.min(pageHeightPx * 2, canvas.height - srcY);
+            const sliceCanvas = document.createElement('canvas');
+            sliceCanvas.width = canvas.width;
+            sliceCanvas.height = srcH;
+            const ctx = sliceCanvas.getContext('2d')!;
+            ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+
+            const sliceImg = sliceCanvas.toDataURL('image/jpeg', 0.95);
+            const sliceHeightMm = (srcH / (pageHeightPx * 2)) * A4_HEIGHT_MM;
+            doc.addImage(sliceImg, 'JPEG', 0, 0, A4_WIDTH_MM, sliceHeightMm);
+          }
+
+          doc.save(`${filename}.pdf`);
+        } finally {
+          document.body.removeChild(offscreen);
+        }
         break;
       }
     }
