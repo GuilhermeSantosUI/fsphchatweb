@@ -682,9 +682,6 @@ export function Attachments() {
                 </span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">{file.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatBytes(file.size)}
-                  </p>
                 </div>
                 <Badge
                   variant={
