@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { approveTR, getTRById, listTRs, rejectTR, sendTRChatMessage } from '@/app/services/tr';
+import type { TRDocument, ReviewStatus } from '@/app/models/tr';
 import { AdminPageShell } from '@/views/components/admin/admin-page-shell';
 import { Badge } from '@/views/components/ui/badge';
 import { Button } from '@/views/components/ui/button';
@@ -11,14 +13,17 @@ import {
   SheetContent
 } from '@/views/components/ui/sheet';
 import {
+  AlertCircleIcon,
   BrainCircuitIcon,
   CheckCircle2Icon,
   ClockIcon,
   FileIcon,
   FileTextIcon,
   LayoutIcon,
+  Loader2Icon,
   MessageSquareIcon,
   PaperclipIcon,
+  RefreshCwIcon,
   SearchIcon,
   SendIcon,
   SparklesIcon,
@@ -26,119 +31,14 @@ import {
   ThumbsUpIcon,
   XCircleIcon
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-type ReviewStatus = 'pending' | 'approved' | 'rejected';
-
-type SourceDocument = {
-  id: string;
-  name: string;
-  type: string;
-  size: string;
-};
-
-type TRDocument = {
-  id: string;
-  title: string;
-  category: string;
-  createdAt: string;
-  generatedBy: 'ai' | 'human';
-  status: ReviewStatus;
-  reviewer?: string;
-  reviewedAt?: string;
-  rejectionReason?: string;
-  preview: string;
-  fullContent: string;
-  version: number;
-  sourceDocuments: SourceDocument[];
-  analysisSummary: string;
-};
 
 type ChatMessage = {
   role: 'user' | 'assistant';
   content: string;
 };
-
-// ─── Mock data ─────────────────────────────────────────────────────────────────
-
-const MOCK_DOCUMENTS: TRDocument[] = [
-  {
-    id: 'tr-001',
-    title: 'Contratação de solução de monitoramento de infraestrutura de TI',
-    category: 'Tecnologia da Informação',
-    createdAt: '2025-06-04T10:22:00',
-    generatedBy: 'ai',
-    status: 'pending',
-    version: 1,
-    preview:
-      'Contratação de empresa especializada para fornecimento de plataforma SaaS de monitoramento...',
-    fullContent: `1. OBJETO\nContratação de empresa especializada para fornecimento de plataforma SaaS de monitoramento contínuo de ativos de infraestrutura de TI, contemplando servidores, redes, bancos de dados e endpoints, com emissão de alertas em tempo real e dashboards gerenciais.\n\n2. JUSTIFICATIVA\nA instituição opera com parque tecnológico distribuído em múltiplos data centers sem visibilidade centralizada de disponibilidade e desempenho. Incidentes não detectados tempestivamente geram impacto direto na continuidade dos serviços ao cidadão.\n\n3. ESPECIFICAÇÕES TÉCNICAS\n- Coleta de métricas com granularidade mínima de 60 segundos\n- Retenção histórica de dados por no mínimo 13 meses\n- API REST para integração com sistemas legados\n- Suporte a protocolo SNMP v2c e v3\n- Autenticação via SSO/SAML 2.0\n\n4. PRAZO DE EXECUÇÃO\n12 meses, prorrogáveis por igual período, nos termos da Lei 14.133/2021.\n\n5. ESTIMATIVA DE VALOR\nR$ 480.000,00 (quatrocentos e oitenta mil reais) anuais, com base em pesquisa de mercado realizada em maio/2025.`,
-    sourceDocuments: [
-      { id: 'sd-1', name: 'Estudo Técnico Preliminar.pdf', type: 'PDF', size: '2.4 MB' },
-      { id: 'sd-2', name: 'Catálogo de Requisitos TI.docx', type: 'DOCX', size: '1.1 MB' },
-    ],
-    analysisSummary: 'O modelo de SaaS foi priorizado conforme a diretriz de nuvem (Pág 3 do Estudo Técnico). Foram extraídas métricas de retenção histórica e requisitos de integração SNMP diretamente do Catálogo de Requisitos.',
-  },
-  {
-    id: 'tr-002',
-    title: 'Aquisição de licenças Microsoft 365 – pacote corporativo',
-    category: 'Licenças de Software',
-    createdAt: '2025-06-03T14:05:00',
-    generatedBy: 'ai',
-    status: 'approved',
-    reviewer: 'Ana Paula Ferreira',
-    reviewedAt: '2025-06-04T09:10:00',
-    version: 2,
-    preview:
-      'Aquisição de licenças Microsoft 365 Business Premium para 350 usuários, incluindo aplicativos...',
-    fullContent: `1. OBJETO\nAquisição de 350 licenças Microsoft 365 Business Premium, incluindo suite de produtividade, colaboração e segurança de endpoints.\n\n2. JUSTIFICATIVA\nContratos vigentes expiram em 31/07/2025. A continuidade das operações depende da renovação tempestiva para evitar interrupção de acesso a e-mails e documentos institucionais.\n\n3. ESPECIFICAÇÕES\n- Microsoft 365 Business Premium – 350 licenças\n- Período: 12 meses\n- Inclui: Exchange Online Plan 2, Teams, SharePoint, OneDrive 1TB/usuário, Defender for Business\n\n4. VALOR ESTIMADO\nR$ 210.000,00 com base em ata de registro de preços vigente – UASG 000123.`,
-    sourceDocuments: [
-      { id: 'sd-3', name: 'Ata de Registro de Preços - UASG 000123.pdf', type: 'PDF', size: '4.5 MB' },
-      { id: 'sd-4', name: 'Levantamento de Usuários Ativos.xlsx', type: 'XLSX', size: '850 KB' },
-    ],
-    analysisSummary: 'Identificada a necessidade de 350 licenças baseada no levantamento da folha. O escopo e os valores foram alinhados estritamente à Ata de Registro de Preços informada.',
-  },
-  {
-    id: 'tr-003',
-    title: 'Serviço de consultoria em segurança da informação e LGPD',
-    category: 'Segurança e Privacidade',
-    createdAt: '2025-06-02T16:40:00',
-    generatedBy: 'ai',
-    status: 'rejected',
-    reviewer: 'Carlos Eduardo Lima',
-    reviewedAt: '2025-06-03T11:30:00',
-    rejectionReason:
-      'Escopo excessivamente genérico. Necessário especificar o número de horas técnicas, perfis dos consultores (sênior/pleno) e produtos entregáveis com critérios de aceite mensuráveis. Reencaminhar para revisão da equipe de TI antes de nova submissão.',
-    version: 1,
-    preview:
-      'Contratação de serviços de consultoria especializada em segurança da informação e gestão de riscos...',
-    fullContent: `1. OBJETO\nContratação de consultoria especializada em segurança da informação, análise de vulnerabilidades e adequação à LGPD.\n\n2. JUSTIFICATIVA\nAuditoria interna de 2024 identificou gaps críticos no programa de segurança da informação e ausência de mapeamento formal de dados pessoais tratados pela instituição.\n\n3. ESCOPO DOS SERVIÇOS\n- Diagnóstico de maturidade em segurança da informação\n- Análise de risco e vulnerabilidades\n- Elaboração de Política de Segurança da Informação\n- Mapeamento de dados pessoais (RoPA)\n- Treinamento das equipes\n\n4. VALOR ESTIMADO\nR$ 320.000,00.`,
-    sourceDocuments: [
-      { id: 'sd-5', name: 'Relatório de Auditoria 2024.pdf', type: 'PDF', size: '12 MB' },
-      { id: 'sd-6', name: 'Plano de Ação LGPD.pdf', type: 'PDF', size: '3.2 MB' },
-    ],
-    analysisSummary: 'O escopo baseou-se nos 5 apontamentos críticos do Relatório de Auditoria 2024. O valor foi estimado pela média das contratações similares recentes.',
-  },
-  {
-    id: 'tr-004',
-    title: 'Contratação de link de internet dedicado – 1 Gbps simétrico',
-    category: 'Conectividade',
-    createdAt: '2025-06-05T08:15:00',
-    generatedBy: 'ai',
-    status: 'pending',
-    version: 1,
-    preview:
-      'Contratação de acesso à internet por link dedicado com velocidade simétrica de 1 Gbps...',
-    fullContent: `1. OBJETO\nContratação de link de acesso à internet dedicado com capacidade de 1 Gbps simétrico para a sede administrativa da instituição.\n\n2. ESPECIFICAÇÕES TÉCNICAS\n- Velocidade: 1 Gbps upload e download\n- SLA de disponibilidade: mínimo 99,5% ao mês\n- Tempo máximo de reparo: 4 horas\n- Fornecimento de equipamento CPE\n- Endereços IP fixos: /29 (6 utilizáveis)\n- Suporte técnico 24x7 com atendimento telefônico\n\n3. PRAZO\n24 meses.\n\n4. VALOR ESTIMADO\nR$ 96.000,00 (R$ 4.000,00/mês), baseado em pesquisa de preços realizada em junho/2025.`,
-    sourceDocuments: [
-      { id: 'sd-7', name: 'Requisitos de Rede 2025.pdf', type: 'PDF', size: '1.5 MB' },
-      { id: 'sd-8', name: 'Pesquisa de Mercado - Links Dedicados.xlsx', type: 'XLSX', size: '500 KB' },
-    ],
-    analysisSummary: 'Requisitos de SLA de 99,5% e IPs fixos /29 extraídos dos padrões de rede atuais. Valores médios da pesquisa de mercado consolidados em R$ 4.000/mês.',
-  },
-];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -175,10 +75,15 @@ function statusConfig(status: ReviewStatus) {
   };
 }
 
+// ─── Inline Correction Chat ──────────────────────────────────────────────────
 
-// ─── Inline Chat Component ───────────────────────────────────────────────────
-
-function CorrectionChat({ doc }: { doc: TRDocument }) {
+function CorrectionChat({
+  doc,
+  onDocumentUpdated,
+}: {
+  doc: TRDocument;
+  onDocumentUpdated: (updated: TRDocument) => void;
+}) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -189,16 +94,13 @@ function CorrectionChat({ doc }: { doc: TRDocument }) {
   }, [messages, isLoading]);
 
   useEffect(() => {
-    // Mock the opening message
-    setMessages([
-      {
-        role: 'assistant',
-        content: `Analisei o motivo da reprovação: "${doc.rejectionReason}".\nPara corrigir o escopo genérico, posso sugerir uma tabela de entregáveis e critérios de aceite. Deseja que eu gere uma proposta?`,
-      },
-    ]);
-  }, [doc]);
+    const greeting = doc.rejectionReason
+      ? `Analisei o motivo da reprovação: "${doc.rejectionReason}".\nPode me dizer qual seção deseja corrigir e como? Por exemplo: "No tópico 3, especifique X horas e os perfis técnicos."`
+      : 'Como posso ajudar a melhorar este Termo de Referência? Descreva a alteração que deseja fazer.';
+    setMessages([{ role: 'assistant', content: greeting }]);
+  }, [doc.id, doc.rejectionReason]);
 
-  const handleSend = () => {
+  const handleSend = useCallback(async () => {
     const text = input.trim();
     if (!text || isLoading) return;
 
@@ -206,17 +108,38 @@ function CorrectionChat({ doc }: { doc: TRDocument }) {
     setInput('');
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const response = await sendTRChatMessage(doc.id, { message: text });
+
+      if (response.changed_sections.length > 0) {
+        // TR was updated and moved back to pending
+        onDocumentUpdated(response.tr);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: response.message,
+          },
+        ]);
+      } else {
+        // AI could not identify what to change — display message, keep doc as-is
+        setMessages((prev) => [
+          ...prev,
+          { role: 'assistant', content: response.message },
+        ]);
+      }
+    } catch (err: any) {
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
-          content: `Aqui está uma sugestão de adequação:\n\n**3.1 Produtos Entregáveis**\n- Relatório de Diagnóstico (Aceite: Validação pelo CISO)\n- Política de SI (Aceite: Aprovação da Diretoria)\n\nDeseja aplicar esta alteração ao documento?`,
+          content: `Ocorreu um erro ao processar a correção: ${err?.response?.data?.detail || err?.message || 'Erro desconhecido.'}`,
         },
       ]);
+    } finally {
       setIsLoading(false);
-    }, 1500);
-  };
+    }
+  }, [doc.id, input, isLoading, onDocumentUpdated]);
 
   return (
     <div className="flex h-[400px] flex-col overflow-hidden rounded-xl border border-primary/20 bg-muted/20">
@@ -265,7 +188,7 @@ function CorrectionChat({ doc }: { doc: TRDocument }) {
             disabled={isLoading}
           />
           <Button size="icon" onClick={handleSend} disabled={!input.trim() || isLoading}>
-            <SendIcon className="size-4" />
+            {isLoading ? <Loader2Icon className="size-4 animate-spin" /> : <SendIcon className="size-4" />}
           </Button>
         </div>
       </div>
@@ -276,7 +199,7 @@ function CorrectionChat({ doc }: { doc: TRDocument }) {
 // ─── Compact Kanban Card ──────────────────────────────────────────────────────
 
 function TRKanbanCard({ doc, onClick }: { doc: TRDocument; onClick: () => void }) {
-
+  const srcCount = doc.sourceDocuments?.length ?? '—';
 
   return (
     <Card
@@ -299,7 +222,7 @@ function TRKanbanCard({ doc, onClick }: { doc: TRDocument; onClick: () => void }
         <div className="flex items-center justify-between mt-1">
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <PaperclipIcon className="size-3.5" />
-            <span>{doc.sourceDocuments.length} docs base</span>
+            <span>{typeof srcCount === 'number' ? `${srcCount} docs base` : 'Fontes disponíveis no detalhe'}</span>
           </div>
           <div className="flex -space-x-1">
             {doc.generatedBy === 'ai' && (
@@ -309,6 +232,12 @@ function TRKanbanCard({ doc, onClick }: { doc: TRDocument; onClick: () => void }
             )}
           </div>
         </div>
+
+        {doc.status === 'rejected' && doc.rejectionReason && (
+          <p className="text-[11px] text-red-600 dark:text-red-400 line-clamp-2 border-t border-red-200 dark:border-red-900/30 pt-2">
+            {doc.rejectionReason}
+          </p>
+        )}
       </CardContent>
     </Card>
   );
@@ -317,51 +246,98 @@ function TRKanbanCard({ doc, onClick }: { doc: TRDocument; onClick: () => void }
 // ─── Main page (Kanban Esteira) ────────────────────────────────────────────────
 
 export function TRReview() {
-  const [documents, setDocuments] = useState<TRDocument[]>(MOCK_DOCUMENTS);
+  const [documents, setDocuments] = useState<TRDocument[]>([]);
+  const [isListLoading, setIsListLoading] = useState(true);
+  const [listError, setListError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [selectedDoc, setSelectedDoc] = useState<TRDocument | null>(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  const REVIEWER_NAME = 'Gestor do Sistema';
+  // ── Load all TRs (one call, group by status on front) ──
+  const fetchDocuments = useCallback(async () => {
+    setIsListLoading(true);
+    setListError(null);
+    try {
+      const response = await listTRs({ page_size: 100 });
+      setDocuments(response.trs);
+    } catch (err: any) {
+      setListError(err?.response?.data?.detail || err?.message || 'Erro ao carregar documentos.');
+    } finally {
+      setIsListLoading(false);
+    }
+  }, []);
 
-  const handleApprove = (id: string) => {
-    setDocuments((prev) =>
-      prev.map((doc) =>
-        doc.id === id
-          ? {
-            ...doc,
-            status: 'approved',
-            reviewer: REVIEWER_NAME,
-            reviewedAt: new Date().toISOString(),
-            rejectionReason: undefined,
-          }
-          : doc,
-      ),
-    );
-    setSelectedDoc((prev) => prev?.id === id ? { ...prev, status: 'approved' } : prev);
-  };
+  useEffect(() => {
+    fetchDocuments();
+  }, [fetchDocuments]);
 
-  const handleRejectConfirm = () => {
-    if (!selectedDoc || !rejectReason.trim()) return;
-    setDocuments((prev) =>
-      prev.map((doc) =>
-        doc.id === selectedDoc.id
-          ? {
-            ...doc,
-            status: 'rejected',
-            reviewer: REVIEWER_NAME,
-            reviewedAt: new Date().toISOString(),
-            rejectionReason: rejectReason,
-          }
-          : doc,
-      ),
-    );
-    setSelectedDoc((prev) => prev ? { ...prev, status: 'rejected', rejectionReason: rejectReason } : null);
+  // ── Open card → load full detail ──
+  const handleOpenCard = useCallback(async (doc: TRDocument) => {
+    setSelectedDoc(doc);
     setIsRejecting(false);
     setRejectReason('');
-  };
+    setActionError(null);
 
+    // Fetch detail only if heavy fields are missing
+    if (!doc.fullContent) {
+      setIsDetailLoading(true);
+      try {
+        const detail = await getTRById(doc.id);
+        setSelectedDoc(detail);
+        // Also update the list entry so we don't re-fetch next time
+        setDocuments((prev) => prev.map((d) => d.id === detail.id ? detail : d));
+      } catch (err: any) {
+        console.error('Failed to load TR detail', err);
+      } finally {
+        setIsDetailLoading(false);
+      }
+    }
+  }, []);
+
+  // ── Approve ──
+  const handleApprove = useCallback(async (id: string) => {
+    setIsActionLoading(true);
+    setActionError(null);
+    try {
+      const updated = await approveTR(id);
+      setDocuments((prev) => prev.map((d) => d.id === id ? updated : d));
+      setSelectedDoc(updated);
+    } catch (err: any) {
+      setActionError(err?.response?.data?.detail || err?.message || 'Erro ao aprovar o TR.');
+    } finally {
+      setIsActionLoading(false);
+    }
+  }, []);
+
+  // ── Reject ──
+  const handleRejectConfirm = useCallback(async () => {
+    if (!selectedDoc || !rejectReason.trim()) return;
+    setIsActionLoading(true);
+    setActionError(null);
+    try {
+      const updated = await rejectTR(selectedDoc.id, { reason: rejectReason });
+      setDocuments((prev) => prev.map((d) => d.id === selectedDoc.id ? updated : d));
+      setSelectedDoc(updated);
+      setIsRejecting(false);
+      setRejectReason('');
+    } catch (err: any) {
+      setActionError(err?.response?.data?.detail || err?.message || 'Erro ao reprovar o TR.');
+    } finally {
+      setIsActionLoading(false);
+    }
+  }, [selectedDoc, rejectReason]);
+
+  // ── Correction chat updated the doc (new version, back to pending) ──
+  const handleDocumentUpdated = useCallback((updated: TRDocument) => {
+    setDocuments((prev) => prev.map((d) => d.id === updated.id ? { ...d, ...updated } : d));
+    setSelectedDoc((prev) => prev ? { ...prev, ...updated } : null);
+  }, []);
+
+  // ── Filter & group ──
   const filtered = documents.filter((doc) => {
     return (
       search.trim() === '' ||
@@ -387,7 +363,7 @@ export function TRReview() {
         description="Analise os documentos gerados, acompanhe as fontes de informação e aprove o prosseguimento dos Termos de Referência."
         badge="Kanban"
       >
-        <div className="mb-6 flex justify-between items-center">
+        <div className="mb-6 flex justify-between items-center gap-4">
           <div className="relative w-full sm:w-80">
             <SearchIcon className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -398,11 +374,30 @@ export function TRReview() {
               className="w-full rounded-lg border border-input bg-background py-2 pl-9 pr-3 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             />
           </div>
-          <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground bg-muted/40 px-3 py-1.5 rounded-lg border">
-            <LayoutIcon className="size-4" />
-            <span>Fluxo de aprovação em esteira</span>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={fetchDocuments}
+              disabled={isListLoading}
+              title="Recarregar lista"
+            >
+              <RefreshCwIcon className={`size-4 ${isListLoading ? 'animate-spin' : ''}`} />
+            </Button>
+            <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground bg-muted/40 px-3 py-1.5 rounded-lg border">
+              <LayoutIcon className="size-4" />
+              <span>Fluxo de aprovação em esteira</span>
+            </div>
           </div>
         </div>
+
+        {/* Global error */}
+        {listError && (
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+            <AlertCircleIcon className="size-4 shrink-0" />
+            {listError}
+          </div>
+        )}
 
         {/* Kanban Board */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full items-start">
@@ -416,13 +411,21 @@ export function TRReview() {
               </h2>
               <Badge variant="secondary" className="bg-background">{cols.pending.length}</Badge>
             </div>
-            {cols.pending.map((doc) => (
-              <TRKanbanCard key={doc.id} doc={doc} onClick={() => setSelectedDoc(doc)} />
-            ))}
-            {cols.pending.length === 0 && (
-              <div className="text-center p-6 text-sm text-muted-foreground border-2 border-dashed rounded-xl">
-                Nenhum documento na fila
+            {isListLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
               </div>
+            ) : (
+              <>
+                {cols.pending.map((doc) => (
+                  <TRKanbanCard key={doc.id} doc={doc} onClick={() => handleOpenCard(doc)} />
+                ))}
+                {cols.pending.length === 0 && (
+                  <div className="text-center p-6 text-sm text-muted-foreground border-2 border-dashed rounded-xl">
+                    Nenhum documento na fila
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -435,13 +438,21 @@ export function TRReview() {
               </h2>
               <Badge variant="secondary" className="bg-background">{cols.rejected.length}</Badge>
             </div>
-            {cols.rejected.map((doc) => (
-              <TRKanbanCard key={doc.id} doc={doc} onClick={() => setSelectedDoc(doc)} />
-            ))}
-            {cols.rejected.length === 0 && (
-              <div className="text-center p-6 text-sm text-muted-foreground border-2 border-dashed rounded-xl border-red-500/20">
-                Nenhum ajuste necessário
+            {isListLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
               </div>
+            ) : (
+              <>
+                {cols.rejected.map((doc) => (
+                  <TRKanbanCard key={doc.id} doc={doc} onClick={() => handleOpenCard(doc)} />
+                ))}
+                {cols.rejected.length === 0 && (
+                  <div className="text-center p-6 text-sm text-muted-foreground border-2 border-dashed rounded-xl border-red-500/20">
+                    Nenhum ajuste necessário
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -454,13 +465,21 @@ export function TRReview() {
               </h2>
               <Badge variant="secondary" className="bg-background">{cols.approved.length}</Badge>
             </div>
-            {cols.approved.map((doc) => (
-              <TRKanbanCard key={doc.id} doc={doc} onClick={() => setSelectedDoc(doc)} />
-            ))}
-            {cols.approved.length === 0 && (
-              <div className="text-center p-6 text-sm text-muted-foreground border-2 border-dashed rounded-xl border-green-500/20">
-                Nenhum TR aprovado
+            {isListLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
               </div>
+            ) : (
+              <>
+                {cols.approved.map((doc) => (
+                  <TRKanbanCard key={doc.id} doc={doc} onClick={() => handleOpenCard(doc)} />
+                ))}
+                {cols.approved.length === 0 && (
+                  <div className="text-center p-6 text-sm text-muted-foreground border-2 border-dashed rounded-xl border-green-500/20">
+                    Nenhum TR aprovado
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
@@ -471,6 +490,7 @@ export function TRReview() {
         if (!open) {
           setSelectedDoc(null);
           setIsRejecting(false);
+          setActionError(null);
         }
       }}>
         <SheetContent side="right" className="w-full overflow-y-auto max-w-[600px] p-0">
@@ -497,6 +517,14 @@ export function TRReview() {
               {/* Body */}
               <div className="flex-1 p-6 space-y-8">
 
+                {/* Action error */}
+                {actionError && (
+                  <div className="flex items-center gap-2 rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                    <AlertCircleIcon className="size-4 shrink-0" />
+                    {actionError}
+                  </div>
+                )}
+
                 {/* Rejection Alert */}
                 {selectedDoc.status === 'rejected' && selectedDoc.rejectionReason && (
                   <div className="bg-red-50 border border-red-200 dark:bg-red-950/20 dark:border-red-900/50 p-4 rounded-xl">
@@ -509,59 +537,96 @@ export function TRReview() {
                   </div>
                 )}
 
-                {/* Source Context (Novo Recurso de "Esteira de Análise") */}
-                <section>
-                  <h3 className="text-sm font-semibold uppercase text-muted-foreground mb-3 flex items-center gap-2">
-                    <BrainCircuitIcon className="size-4" /> Análise e Fontes da IA
-                  </h3>
-                  <div className="bg-muted/30 border rounded-xl p-4 space-y-4">
-                    <p className="text-sm leading-relaxed text-foreground/90">
-                      <strong>Resumo da Análise:</strong> {selectedDoc.analysisSummary}
-                    </p>
-                    <div>
-                      <span className="text-xs font-semibold text-muted-foreground mb-2 block">DOCUMENTOS BASE UTILIZADOS</span>
-                      <div className="flex flex-col gap-2">
-                        {selectedDoc.sourceDocuments.map((sd) => (
-                          <div key={sd.id} className="flex items-center justify-between bg-background border px-3 py-2 rounded-lg text-sm">
-                            <div className="flex items-center gap-2">
-                              <FileIcon className="size-4 text-primary/70" />
-                              <span className="font-medium">{sd.name}</span>
+                {/* Source Context */}
+                {isDetailLoading ? (
+                  <div className="flex justify-center py-10">
+                    <Loader2Icon className="size-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <>
+                    {/* AI Analysis & Sources */}
+                    <section>
+                      <h3 className="text-sm font-semibold uppercase text-muted-foreground mb-3 flex items-center gap-2">
+                        <BrainCircuitIcon className="size-4" /> Análise e Fontes da IA
+                      </h3>
+                      <div className="bg-muted/30 border rounded-xl p-4 space-y-4">
+                        {selectedDoc.analysisSummary ? (
+                          <p className="text-sm leading-relaxed text-foreground/90">
+                            <strong>Resumo da Análise:</strong> {selectedDoc.analysisSummary}
+                          </p>
+                        ) : (
+                          <p className="text-sm text-muted-foreground italic">Resumo da análise não disponível nesta versão.</p>
+                        )}
+                        {selectedDoc.sourceDocuments && selectedDoc.sourceDocuments.length > 0 && (
+                          <div>
+                            <span className="text-xs font-semibold text-muted-foreground mb-2 block">DOCUMENTOS BASE UTILIZADOS</span>
+                            <div className="flex flex-col gap-2">
+                              {selectedDoc.sourceDocuments.map((sd) => (
+                                <div key={sd.id} className="flex items-center justify-between bg-background border px-3 py-2 rounded-lg text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <FileIcon className="size-4 text-primary/70" />
+                                    <span className="font-medium">{sd.name}</span>
+                                  </div>
+                                  {sd.size ? (
+                                    <span className="text-xs text-muted-foreground">{sd.size}</span>
+                                  ) : (
+                                    <Badge variant="outline" className="text-[10px] uppercase">{sd.type}</Badge>
+                                  )}
+                                </div>
+                              ))}
                             </div>
-                            <span className="text-xs text-muted-foreground">{sd.size}</span>
                           </div>
-                        ))}
+                        )}
                       </div>
-                    </div>
-                  </div>
-                </section>
+                    </section>
 
-                {/* TR Content */}
-                <section>
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-sm font-semibold uppercase text-muted-foreground flex items-center gap-2">
-                      <FileTextIcon className="size-4" /> Documento Gerado
-                    </h3>
-                    <Button variant="ghost" size="sm" className="h-8 text-primary" onClick={() => navigator.clipboard.writeText(selectedDoc.fullContent)}>Copiar Texto</Button>
-                  </div>
-                  <div className="bg-background border rounded-xl p-5 shadow-sm">
-                    <p className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-foreground/90">
-                      {selectedDoc.fullContent}
-                    </p>
-                  </div>
-                </section>
+                    {/* TR Full Content */}
+                    <section>
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-sm font-semibold uppercase text-muted-foreground flex items-center gap-2">
+                          <FileTextIcon className="size-4" /> Documento Gerado
+                        </h3>
+                        {selectedDoc.fullContent && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 text-primary"
+                            onClick={() => navigator.clipboard.writeText(selectedDoc.fullContent!)}
+                          >
+                            Copiar Texto
+                          </Button>
+                        )}
+                      </div>
+                      <div className="bg-background border rounded-xl p-5 shadow-sm">
+                        {selectedDoc.fullContent ? (
+                          <p className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-foreground/90">
+                            {selectedDoc.fullContent}
+                          </p>
+                        ) : (
+                          <p className="text-sm text-muted-foreground italic">
+                            {selectedDoc.preview}
+                          </p>
+                        )}
+                      </div>
+                    </section>
 
-                {/* Chat (Apenas se reprovado ou para pedir edições) */}
-                {selectedDoc.status === 'rejected' && (
-                  <section>
-                    <h3 className="text-sm font-semibold uppercase text-muted-foreground mb-3 flex items-center gap-2">
-                      <MessageSquareIcon className="size-4" /> Ajuste com a IA
-                    </h3>
-                    <CorrectionChat doc={selectedDoc} />
-                  </section>
+                    {/* Correction Chat — only for rejected TRs */}
+                    {selectedDoc.status === 'rejected' && (
+                      <section>
+                        <h3 className="text-sm font-semibold uppercase text-muted-foreground mb-3 flex items-center gap-2">
+                          <MessageSquareIcon className="size-4" /> Ajuste com a IA
+                        </h3>
+                        <CorrectionChat
+                          doc={selectedDoc}
+                          onDocumentUpdated={handleDocumentUpdated}
+                        />
+                      </section>
+                    )}
+                  </>
                 )}
               </div>
 
-              {/* Footer Actions */}
+              {/* Footer Actions — only for pending TRs */}
               {selectedDoc.status === 'pending' && (
                 <div className="border-t bg-background p-4 flex gap-3 justify-end sticky bottom-0 z-10 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.1)]">
                   {isRejecting ? (
@@ -571,18 +636,41 @@ export function TRReview() {
                         placeholder="Descreva o motivo da reprovação..."
                         value={rejectReason}
                         onChange={(e) => setRejectReason(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleRejectConfirm()}
                         className="flex-1 rounded-md border px-3 text-sm"
                       />
-                      <Button variant="outline" onClick={() => setIsRejecting(false)}>Cancelar</Button>
-                      <Button variant="destructive" onClick={handleRejectConfirm} disabled={!rejectReason}>Confirmar</Button>
+                      <Button variant="outline" onClick={() => setIsRejecting(false)} disabled={isActionLoading}>
+                        Cancelar
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={handleRejectConfirm}
+                        disabled={!rejectReason.trim() || isActionLoading}
+                      >
+                        {isActionLoading ? <Loader2Icon className="size-4 animate-spin mr-2" /> : null}
+                        Confirmar
+                      </Button>
                     </div>
                   ) : (
                     <>
-                      <Button variant="outline" className="border-red-500/30 text-red-600 hover:bg-red-50 hover:text-red-700" onClick={() => setIsRejecting(true)}>
+                      <Button
+                        variant="outline"
+                        className="border-red-500/30 text-red-600 hover:bg-red-50 hover:text-red-700"
+                        onClick={() => setIsRejecting(true)}
+                        disabled={isActionLoading}
+                      >
                         <ThumbsDownIcon className="size-4 mr-2" /> Reprovar
                       </Button>
-                      <Button className="bg-green-600 hover:bg-green-700 text-white" onClick={() => handleApprove(selectedDoc.id)}>
-                        <ThumbsUpIcon className="size-4 mr-2" /> Aprovar Documento
+                      <Button
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        onClick={() => handleApprove(selectedDoc.id)}
+                        disabled={isActionLoading}
+                      >
+                        {isActionLoading
+                          ? <Loader2Icon className="size-4 animate-spin mr-2" />
+                          : <ThumbsUpIcon className="size-4 mr-2" />
+                        }
+                        Aprovar Documento
                       </Button>
                     </>
                   )}

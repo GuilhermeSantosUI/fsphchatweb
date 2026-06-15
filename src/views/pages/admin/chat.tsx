@@ -1,5 +1,6 @@
 import type { DocumentState } from '@/app/models/chat';
 import { chatRoute } from '@/app/services/chat';
+import { createTR } from '@/app/services/tr';
 import { cn } from '@/app/utils';
 import AnimatedShinyText from '@/views/components/ui/animated-shiny-text';
 import { Button } from '@/views/components/ui/button';
@@ -48,12 +49,15 @@ import { TextAnimate } from '@/views/components/ui/text-animate';
 import html2pdf from 'html2pdf.js';
 import {
   ChevronDown,
+  CheckCircle2,
   Download,
   FileArchive,
   FileCode,
   File as FileIcon,
   FileText,
   FileType2,
+  Loader2,
+  SendToBack,
   ThumbsUp,
   X
 } from 'lucide-react';
@@ -155,6 +159,26 @@ export function AdminChat() {
   const [isDragging, setIsDragging] = useState(false);
   const [currentDocument, setCurrentDocument] = useState<DocumentState | null>(null);
   const [isDocumentPanelOpen, setIsDocumentPanelOpen] = useState(false);
+  const [isSendingToReview, setIsSendingToReview] = useState(false);
+  const [sendToReviewStatus, setSendToReviewStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [sendToReviewError, setSendToReviewError] = useState<string | null>(null);
+
+  const handleSendToReview = useCallback(async () => {
+    if (!conversation_id || isSendingToReview) return;
+    setIsSendingToReview(true);
+    setSendToReviewStatus('idle');
+    setSendToReviewError(null);
+    try {
+      await createTR({ conversation_id });
+      setSendToReviewStatus('success');
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail || err?.message || 'Erro desconhecido.';
+      setSendToReviewError(detail);
+      setSendToReviewStatus('error');
+    } finally {
+      setIsSendingToReview(false);
+    }
+  }, [conversation_id, isSendingToReview]);
 
 
 
@@ -201,6 +225,8 @@ export function AdminChat() {
     // Reset document state when conversation changes
     setCurrentDocument(null);
     setIsDocumentPanelOpen(false);
+    setSendToReviewStatus('idle');
+    setSendToReviewError(null);
 
     async function loadConversation() {
       if (!conversation_id) return;
@@ -761,6 +787,39 @@ export function AdminChat() {
               </span>
             </div>
             <div className="flex items-center gap-2 shrink-0">
+              {/* Send to Review Button */}
+              {conversation_id && (
+                <div className="flex flex-col items-end gap-0.5">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={`font-medium ${
+                      sendToReviewStatus === 'success'
+                        ? 'border-green-500/40 text-green-700 dark:text-green-400'
+                        : sendToReviewStatus === 'error'
+                        ? 'border-red-500/40 text-red-600'
+                        : 'border-primary/40 text-primary'
+                    }`}
+                    onClick={handleSendToReview}
+                    disabled={isSendingToReview || sendToReviewStatus === 'success'}
+                    title="Enviar este TR para a esteira de revisão"
+                  >
+                    {isSendingToReview ? (
+                      <Loader2 className="size-4 mr-1.5 animate-spin" />
+                    ) : sendToReviewStatus === 'success' ? (
+                      <CheckCircle2 className="size-4 mr-1.5" />
+                    ) : (
+                      <SendToBack className="size-4 mr-1.5" />
+                    )}
+                    {sendToReviewStatus === 'success' ? 'Enviado!' : 'Enviar para Revisão'}
+                  </Button>
+                  {sendToReviewStatus === 'error' && sendToReviewError && (
+                    <p className="text-[11px] text-red-600 max-w-[180px] text-right leading-tight">
+                      {sendToReviewError}
+                    </p>
+                  )}
+                </div>
+              )}
               {/* Export Dropdown */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
