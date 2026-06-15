@@ -47,19 +47,18 @@ import { TextAnimate } from '@/views/components/ui/text-animate';
 import html2pdf from 'html2pdf.js';
 import {
   ChevronDown,
-  Copy,
   Download,
   FileArchive,
   FileCode,
+  File as FileIcon,
   FileText,
   FileType2,
   ThumbsUp,
-  X,
-  File as FileIcon,
+  X
 } from 'lucide-react';
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useStickToBottomContext } from 'use-stick-to-bottom';
-import { useParams, useNavigate } from 'react-router-dom';
 
 const DEFAULT_CHAT_SUGGESTIONS = [
   'Preciso gerar um Termo de Referência para contratação de serviço de TI.',
@@ -177,7 +176,7 @@ export function AdminChat() {
 
     const files = Array.from(e.dataTransfer.files);
     const validExtensions = ['.pdf', '.txt', '.docx'];
-    
+
     const validFiles = files.filter(file => {
       const extension = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
       return validExtensions.includes(extension);
@@ -198,26 +197,26 @@ export function AdminChat() {
   useEffect(() => {
     async function loadConversation() {
       if (!conversation_id) return;
-      
+
       try {
         setIsLoading(true);
         const state = await chatRoute.getChatById(conversation_id);
-        
+
         // Map backend messages to AdminChatMessage
         // Note: adjust this logic based on your actual backend message structure
         if (state.messages && Array.isArray(state.messages)) {
           const loadedMessages: AdminChatMessage[] = state.messages.map((m: any) => ({
             id: m.id || crypto.randomUUID(),
             role: m.role || 'user',
-            parts: [{ 
-              type: 'text', 
-              text: (m.type === 'error' && m.message) 
-                ? (m.message === 'error' ? `Ocorreu um erro no histórico.` : m.message) 
-                : (m.html && m.html !== 'error' ? m.html : (m.text && m.text !== 'error' ? m.text : m.content || m.message || `Ocorreu um erro desconhecido no histórico.`)) 
+            parts: [{
+              type: 'text',
+              text: (m.type === 'error' && m.message)
+                ? (m.message === 'error' ? `Ocorreu um erro no histórico.` : m.message)
+                : (m.html && m.html !== 'error' ? m.html : (m.text && m.text !== 'error' ? m.text : m.content || m.message || `Ocorreu um erro desconhecido no histórico.`))
             }],
             createdAt: m.createdAt ? new Date(m.createdAt) : new Date(),
           }));
-          
+
           if (loadedMessages.length > 0) {
             setMessages(loadedMessages);
           }
@@ -228,7 +227,7 @@ export function AdminChat() {
         setIsLoading(false);
       }
     }
-    
+
     loadConversation();
   }, [conversation_id]);
 
@@ -296,7 +295,7 @@ export function AdminChat() {
       }
 
       setSuggestionText(null);
-      
+
       const currentAttachments = [...attachments];
       setAttachments([]);
 
@@ -310,7 +309,7 @@ export function AdminChat() {
         });
 
         const newConversationId = response.conversation_id || conversation_id;
-        
+
         if (newConversationId && currentAttachments.length > 0) {
           for (const file of currentAttachments) {
             await chatRoute.uploadContext(newConversationId, file);
@@ -322,7 +321,7 @@ export function AdminChat() {
         }
 
         let assistantText = '';
-        
+
         switch (response.type) {
           case 'error':
             assistantText = response.message === 'error' ? `Ocorreu um erro ao processar a resposta da API.` : String(response.message);
@@ -340,12 +339,12 @@ export function AdminChat() {
             assistantText = `Ocorreu um erro desconhecido na resposta da API.`;
             break;
         }
-              
+
         setMessages((previous) => [
           ...previous,
           createMessage('assistant', assistantText),
         ]);
-        
+
         window.dispatchEvent(new CustomEvent('chat-updated'));
       } catch (err: any) {
         setMessages((previous) => [
@@ -477,7 +476,7 @@ export function AdminChat() {
   };
 
   return (
-    <div 
+    <div
       className="flex-1 min-h-0 h-full flex flex-col overflow-hidden relative"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -540,7 +539,7 @@ export function AdminChat() {
                             className="w-full space-y-3"
                           >
                             {isHtml(part.text) &&
-                            message.role === 'assistant' ? (
+                              message.role === 'assistant' ? (
                               <div className="flex gap-2 justify-end mb-2">
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
@@ -653,7 +652,7 @@ export function AdminChat() {
               <div key={idx} className="flex items-center gap-2 px-3 py-1.5 bg-accent text-accent-foreground rounded-md text-sm group">
                 <FileIcon className="size-4 opacity-70" />
                 <span className="truncate max-w-[200px]" title={file.name}>{file.name}</span>
-                <button 
+                <button
                   onClick={() => removeAttachment(idx)}
                   className="opacity-50 hover:opacity-100 hover:text-destructive transition-colors ml-1"
                 >
