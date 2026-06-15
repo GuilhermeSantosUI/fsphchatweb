@@ -221,20 +221,26 @@ export function AdminChat() {
     setAttachments(prev => prev.filter((_, index) => index !== indexToRemove));
   };
 
-  // Load conversation state on mount
+  // Load conversation state on mount / reset when conversation changes
   useEffect(() => {
-    // Reset document state when conversation changes
+    // Always reset UI state when conversation_id changes
     setCurrentDocument(null);
     setIsDocumentPanelOpen(false);
     setSendToReviewStatus('idle');
     setSendToReviewError(null);
+    setAttachments([]);
+    setIsLoading(false);
+
+    // No conversation selected → blank slate
+    if (!conversation_id) {
+      setMessages([WELCOME_MESSAGE]);
+      return;
+    }
 
     async function loadConversation() {
-      if (!conversation_id) return;
-
       try {
         setIsLoading(true);
-        const state = await chatRoute.getChatById(conversation_id);
+        const state = await chatRoute.getChatById(conversation_id!);
 
         // Load current_document if it exists
         if (state.current_document) {
@@ -243,7 +249,6 @@ export function AdminChat() {
         }
 
         // Map backend messages to AdminChatMessage
-        // Note: adjust this logic based on your actual backend message structure
         if (state.messages && Array.isArray(state.messages)) {
           const loadedMessages: AdminChatMessage[] = state.messages.map((m: any) => ({
             id: m.id || crypto.randomUUID(),
@@ -257,12 +262,13 @@ export function AdminChat() {
             createdAt: m.createdAt ? new Date(m.createdAt) : new Date(),
           }));
 
-          if (loadedMessages.length > 0) {
-            setMessages(loadedMessages);
-          }
+          setMessages(loadedMessages.length > 0 ? loadedMessages : [WELCOME_MESSAGE]);
+        } else {
+          setMessages([WELCOME_MESSAGE]);
         }
       } catch (err) {
         console.error('Failed to load conversation state', err);
+        setMessages([WELCOME_MESSAGE]);
       } finally {
         setIsLoading(false);
       }
