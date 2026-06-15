@@ -541,7 +541,7 @@ export function TRReview() {
                     <h3 className="text-sm font-semibold uppercase text-muted-foreground flex items-center gap-2">
                       <FileTextIcon className="size-4" /> Documento Gerado
                     </h3>
-                    <Button variant="ghost" size="sm" className="h-8 text-primary">Copiar Texto</Button>
+                    <Button variant="ghost" size="sm" className="h-8 text-primary" onClick={() => navigator.clipboard.writeText(selectedDoc.fullContent)}>Copiar Texto</Button>
                   </div>
                   <div className="bg-background border rounded-xl p-5 shadow-sm">
                     <p className="whitespace-pre-wrap font-mono text-sm leading-relaxed text-foreground/90">

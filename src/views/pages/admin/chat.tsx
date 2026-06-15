@@ -12,6 +12,7 @@ import {
 import {
   ChatMessage,
   ChatMessageAction,
+  ChatMessageActionCopy,
   ChatMessageActions,
   ChatMessageAuthor,
   ChatMessageAvatar,
@@ -211,8 +212,8 @@ export function AdminChat() {
             parts: [{ 
               type: 'text', 
               text: (m.type === 'error' && m.message) 
-                ? (m.message === 'error' ? `DEBUG HISTORY: \n\`\`\`json\n${JSON.stringify(m, null, 2)}\n\`\`\`` : m.message) 
-                : (m.html && m.html !== 'error' ? m.html : (m.text && m.text !== 'error' ? m.text : m.content || m.message || `DEBUG HISTORY UNKNOWN: \n\`\`\`json\n${JSON.stringify(m, null, 2)}\n\`\`\``)) 
+                ? (m.message === 'error' ? `Ocorreu um erro no histórico.` : m.message) 
+                : (m.html && m.html !== 'error' ? m.html : (m.text && m.text !== 'error' ? m.text : m.content || m.message || `Ocorreu um erro desconhecido no histórico.`)) 
             }],
             createdAt: m.createdAt ? new Date(m.createdAt) : new Date(),
           }));
@@ -324,7 +325,7 @@ export function AdminChat() {
         
         switch (response.type) {
           case 'error':
-            assistantText = response.message === 'error' ? `DEBUG API RESPONSE: \n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\`` : String(response.message);
+            assistantText = response.message === 'error' ? `Ocorreu um erro ao processar a resposta da API.` : String(response.message);
             break;
           case 'tr':
           case 'tr_update':
@@ -333,10 +334,10 @@ export function AdminChat() {
           case 'tr_explain':
           case 'conversational':
           case 'document_query':
-            assistantText = response.message === 'error' ? `DEBUG API RESPONSE: \n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\`` : String(response.message);
+            assistantText = response.message === 'error' ? `Ocorreu um erro ao processar a resposta da API.` : String(response.message);
             break;
           default:
-            assistantText = `DEBUG UNKNOWN PAYLOAD: \n\`\`\`json\n${JSON.stringify(response, null, 2)}\n\`\`\``;
+            assistantText = `Ocorreu um erro desconhecido na resposta da API.`;
             break;
         }
               
@@ -351,7 +352,7 @@ export function AdminChat() {
           ...previous,
           createMessage(
             'assistant',
-            `Ocorreu um erro ao consultar a API. Detalhes: ${err?.message}\n\nDEBUG API ERROR: \n\`\`\`json\n${JSON.stringify(err?.response?.data || err, null, 2)}\n\`\`\``,
+            `Ocorreu um erro ao consultar a API. Detalhes: ${err?.message || 'Erro desconhecido'}`,
           ),
         ]);
       } finally {
@@ -509,9 +510,7 @@ export function AdminChat() {
             return (
               <ChatMessage key={message.id}>
                 <ChatMessageActions>
-                  <ChatMessageAction label="Copiar">
-                    <Copy className="size-4" />
-                  </ChatMessageAction>
+                  <ChatMessageActionCopy onClick={() => navigator.clipboard.writeText(message.parts.map(p => p.text).join('\n'))} />
                   <ChatMessageAction label="Gostei">
                     <ThumbsUp className="size-4" />
                   </ChatMessageAction>
@@ -612,9 +611,7 @@ export function AdminChat() {
           {isLoading ? (
             <ChatMessage key="assistant-loading">
               <ChatMessageActions>
-                <ChatMessageAction label="Copiar">
-                  <Copy className="size-4" />
-                </ChatMessageAction>
+                <ChatMessageActionCopy onClick={() => navigator.clipboard.writeText(assistantLoadingMessage)} />
                 <ChatMessageAction label="Gostei">
                   <ThumbsUp className="size-4" />
                 </ChatMessageAction>

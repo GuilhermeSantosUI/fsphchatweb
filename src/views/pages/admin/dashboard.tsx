@@ -369,7 +369,7 @@ export function Attachments() {
         { label: 'Base documental' },
       ]}
       title="Base documental e anexos"
-      description="Gerencie os arquivos que alimentam a base vetorial da IA para geracao de TR com contexto institucional confiavel e rastreavel."
+      description="Gerencie os arquivos que alimentam a base vetorial da IA para geração de TR com contexto institucional confiável e rastreável."
       badge="RAG habilitado"
       actions={
         <div className="flex items-center gap-2">
@@ -394,26 +394,26 @@ export function Attachments() {
         {
           label: 'Documentos indexados',
           value: `${totalIndexed}`,
-          description: 'Arquivos com embeddings disponiveis para recuperacao.',
+          description: 'Arquivos com embeddings disponíveis para recuperação.',
           tone: 'primary',
         },
         {
-          label: 'Fila de ingestao',
+          label: 'Fila de ingestão',
           value: `${pendingQueueCount}`,
-          description: 'Arquivos aguardando processamento e validacao.',
+          description: 'Arquivos aguardando processamento e validação.',
           tone: pendingQueueCount ? 'warning' : 'default',
         },
         {
-          label: 'Ultima atualizacao',
+          label: 'Última atualização',
           value: 'Hoje',
-          description: 'Sincronizacao da base vetorial concluida as 09:42.',
+          description: 'Sincronização da base vetorial concluída às 09:42.',
           tone: 'success',
         },
         {
           label: 'Cobertura do contexto',
           value: '94%',
           description:
-            'Historico de TRs e anexos criticos disponiveis para busca.',
+            'Histórico de TRs e anexos críticos disponíveis para busca.',
           tone: 'default',
         },
       ]}
@@ -449,8 +449,8 @@ export function Attachments() {
             <CardHeader>
               <CardTitle>Enviar anexos para a IA</CardTitle>
               <CardDescription>
-                Inclua editais, TRs antigos, pareceres e anexos tecnicos para
-                enriquecer a geracao baseada em Ground Truth.
+                Inclua editais, TRs antigos, pareceres e anexos técnicos para
+                enriquecer a geração baseada em Ground Truth.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -621,21 +621,21 @@ export function Attachments() {
           <CardHeader>
             <CardTitle>Pipeline RAG</CardTitle>
             <CardDescription>
-              Etapas executadas apos o envio de cada anexo institucional.
+              Etapas executadas após o envio de cada anexo institucional.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3 text-sm text-muted-foreground">
             <div className="flex items-start gap-3 rounded-xl border p-3">
               <Layers3Icon className="mt-0.5 size-4 text-primary" />
-              Classificacao automatica por tipo de documento e tema do TR.
+              Classificação automática por tipo de documento e tema do TR.
             </div>
             <div className="flex items-start gap-3 rounded-xl border p-3">
               <DatabaseZapIcon className="mt-0.5 size-4 text-primary" />
-              Geracao de embeddings e indexacao na base vetorial.
+              Geração de embeddings e indexação na base vetorial.
             </div>
             <div className="flex items-start gap-3 rounded-xl border p-3">
               <FolderSyncIcon className="mt-0.5 size-4 text-primary" />
-              Disponibilizacao do conteudo para chat e fluxo de analise do TR.
+              Disponibilização do conteúdo para chat e fluxo de análise do TR.
             </div>
 
             {activeTab === 'editor' && (
